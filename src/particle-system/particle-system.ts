@@ -100,6 +100,12 @@ export class ParticleDerivative {
             
         }, this);
     }
+    destroy() {
+        this.derivative.forEach((p)=>{
+            p = [];
+        });
+        this.derivative = [];
+    }
 }
 /**
  * The ParticleSystem class takes an array of particles and updates
@@ -209,6 +215,12 @@ export class ParticleSystem {
 
     printDerivative() {
         this.derivative.print();
+    }
+
+    destroy() {
+        this.particles = [];
+        this.forces = [];
+        this.derivative.destroy();
     }
 
 }

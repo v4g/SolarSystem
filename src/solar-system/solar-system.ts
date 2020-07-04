@@ -1,48 +1,73 @@
-import { Group } from "three";
-import { Planet } from "./planet";
+import { Group, Vector3 } from "three";
+import { Planet, PlanetParams } from "./planet";
 import { PlanetOrbit } from "./planet-orbit";
 import { ParticleSystem, GravityForce } from "../particle-system/particle-system";
 
+export class SolarSystemParams{
+    time_step:number;
+    planets: Array<PlanetParams>
+    constructor() {
+        this.time_step = 0.01;
+        this.planets = new Array<PlanetParams>();
+    }
+}
+
 export class SolarSystem {
-    ORBITS = [[10, 1],[20, 2]];
-    MASSES = [1000, 1, 1];
+    PLANETS = [
+        //name  radii color    x_pos y_vel mass
+        // ['sun', 2.5, '#ffff00', 0, 26,  1,    0, 40],
+        // ['mercury', 0.5, '#ffff00', -10, -10, 0, 1, 40],
+        // ['venus', 0.5, '#ffff00', -10, 10,  1, 0, 40],
+        // ['earth', 0.5, '#ffff00', 10, 10, 0, -1, 40],
+        // ['mars', 0.5, '#ffff00', 10, -10, -1, 0, 40],
+        ['mercury', 0.5, '#ffff00', -10, 0, 0, 1, 40],
+        ['venus', 0.5, '#ffff00', -10, 10,  0.866, -0.5, 40],
+        ['earth', 0.5, '#ffff00', -2.33, 5, -0.866, -0.5, 40],
+        ]; 
     group: Group;
     planets: Array<Planet>;
     orbits: Array<PlanetOrbit>;
     sun: Planet;
     particleSystem: ParticleSystem;
-    constructor() {
+    constructor(simParams?: SolarSystemParams) {
         this.group = new Group();
         this.planets = [];
         this.orbits = [];
-        this.sun = new Planet('sun', 5, '#ffff00');
-        this.sun.setMass(this.MASSES[0]);
-        this.group.add(this.sun.mesh);
         this.particleSystem = new ParticleSystem();
         this.particleSystem.addForce(new GravityForce());
-        this.createPlanets();
+        this.createPlanets(simParams);
     }
-
-    createPlanets() {
-        this.planets.push(new Planet('mercury', 2, '#ffff00'));
-        this.planets.push(new Planet('venus', 2, '#ffff00'));
-        this.planets.forEach((planet,i) => {
-            this.group.add(planet.mesh);
-            this.particleSystem.addParticle(planet);
-            planet.setPosition(this.ORBITS[i][0], 0, 0);
-            planet.setVelocity(0, 5, 0);
-            planet.setMass(this.MASSES[i+1]);
-        }, this);
-        this.particleSystem.addParticle(this.sun);
-        // for (var i = 0; i < this.ORBITS.length; i++) {
-        //     this.orbits.push(new PlanetOrbit(this.sun.position(), this.planets[i], this.ORBITS[i][0], this.ORBITS[i][0], this.ORBITS[i][1]));
-        // }
+    static defaultSimParams() {
+        let params = new SolarSystemParams();
+        params.planets.push(new PlanetParams('mercury', new Vector3(0, 0, 0), new Vector3(0, 1, 0), '#ffff00', 10));
+        params.planets.push(new PlanetParams('venus', new Vector3(10, 0, 0), new Vector3(0, -1, 0), '#ffff00', 10));
+        return params;
+    }
+    createPlanets(simParams?: SolarSystemParams) {
+        if (!simParams) {
+            simParams = SolarSystem.defaultSimParams();
+        }
+        simParams.planets.forEach((planetData,i) => {
+                const planet = new Planet(planetData.name, 0.5, planetData.color, planetData.mass)
+                this.planets.push(planet);
+                planet.mesh.userData.index = i;
+                this.group.add(planet.mesh);
+                this.particleSystem.addParticle(planet);
+                planet.setPosition(planetData.position.x, planetData.position.y, planetData.position.z);
+                planet.setVelocity(planetData.velocity.x, planetData.velocity.y, planetData.velocity.z);
+            }, this);
     }
     update(t: number) {
-        // this.orbits.forEach(orbit => {
-        //     orbit.update(t);
-        // });
         const time_step = 0.01;
         this.particleSystem.updateMidPoint(time_step);
+    }
+
+    destroy() {
+        this.planets.forEach(p=> {
+            p.destroy();
+        });
+        this.planets = [];
+        this.particleSystem.destroy();
+
     }
 }

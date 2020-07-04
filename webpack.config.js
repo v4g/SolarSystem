@@ -1,14 +1,20 @@
 const path = require('path');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 module.exports = {
   entry: './src/index.ts',
   devtool: 'inline-source-map',
   plugins: [
     new CleanWebpackPlugin(),
+    new CopyWebpackPlugin({
+      patterns: [
+        { from: './src/css', to: './css' },
+      ],
+    }),
     new HtmlWebpackPlugin({
       title: 'ThreeJS',
+      template: 'src/index.html'
     }),
   ],
   module: {
@@ -21,7 +27,7 @@ module.exports = {
     ],
   },
   resolve: {
-    extensions: ['.tsx', '.ts', '.js'],
+    extensions: ['.tsx', '.ts', '.js', '.css'],
   },
   output: {
     filename: '[name].js',

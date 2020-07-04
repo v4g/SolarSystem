@@ -1,14 +1,41 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<meta charset="utf-8">
-		<title>My first three.js app</title>
-		<style>
-			body { margin: 0; }
-			canvas { display: block; }
-		</style>
-	</head>
-	<body>
-		<script type="module" src="index.js"></script>
-	</body>
+
+<head>
+	<meta charset="utf-8">
+	<title>Gravity Simulation</title>
+	<link rel="stylesheet" type="text/css" href="css/stylesheet.css">
+	<style>
+		body {
+			margin: 0;
+		}
+
+		canvas {
+			display: block;
+		}
+	</style>
+</head>
+
+<body>
+	<div class='HUD'>
+		<label for="planet-list">Planets</label>
+		<select name="planet-list" id="planet-list" size="4">
+		</select>
+		<input type="button" id="add-planet" name="add-planet" value="Add Planet">
+		<input type="button" id="remove-planet" name="remove-planet" value="Remove Planet">
+		<label for="pos_x">Position Vector:</label>
+		<input type="number" id="x_pos" name="pos_x">
+		<input type="number" id="y_pos" name="pos_y">
+		<input type="number" id="z_pos" name="pos_z">
+		<input type="number" id="x_vel" name="vel_x">
+		<input type="number" id="y_vel" name="vel_y">
+		<input type="number" id="z_vel" name="vel_z">
+		<input type="number" id="mass" name="mass">
+		
+		<input type="button" id="reset-sim" value="Reset Simulation">
+		<input type="submit" value="Reload Values">
+		<input type="submit" id="pause-sim" value="Pause Simulation">
+	</div>
+</body>
+
 </html>
