@@ -1,0 +1,23 @@
+X Fix the name not udpating issue
+Update the name to reflect the new name even if the simulation is reset and the planet is clicked in GUI
+Adding/Removing new planets should happen instantaneously
+    Should this restart the simulation or just continue it?
+    Continuing it would involve adding it dynamically to the particle system
+        Pause the simulation
+        The parameters would need to be synced 
+
+Managing Live Editing and Simulation Starting Point
+    Live editing
+        Planets would be moved around and velocities changed by the mouse
+        "Lock" button "Use this as the starting point"
+        If planets are added during this mode, they will removed on reset unless the values are saved as starting point
+        If a planet is added and reset simulation button is hit, all the current values will be used, which 
+        includes the list of new planets
+        If values are changed in the dialog boxes, should they be changed in the planets directly as well? 
+        Only if sim is paused. 
+
+What happens if a bunch of planets start at the same point and some sort of
+    accumulation code is written that accumulates planets that come too close
+Style the boxes
+Add velocity selection through mouse right click
+Fix adding a planet doesn't automatically select it

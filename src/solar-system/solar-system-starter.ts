@@ -82,18 +82,13 @@ export class SolarSystemStarter extends Boilerplate {
      * parameters.
      * Then it retrieves the values for the new planet params and sets it on the
      * input boxes
-     * If index was specified this will select the option specified by the index
      */
-    selectPlanet(index?: number) {
+    selectPlanet() {
         const list = document.getElementById('planet-list') as HTMLSelectElement;
         if (this.selectedPlanetIndex >= 0) {
             this.params.planets[this.selectedPlanetIndex] = this.buildPlanetSimParamsObj();
         }
-
-        // if (index) {
-        //     list.selectedIndex = index;
-        //     console.log(index);
-        // } 
+        console.log("Selected Befoe", this.selectedPlanetIndex);
         this.selectedPlanetIndex = list.selectedIndex;
         this.updateParamsView();
     }
@@ -104,11 +99,22 @@ export class SolarSystemStarter extends Boilerplate {
         if (this.selectedPlanetIndex >= 0) {
             const planet = this.params.planets[this.selectedPlanetIndex];
             this.inputView.set(planet);
+            this.updatePlanetOptions();
         }
     }
 
+    updatePlanetOptions() {
+        const list = document.getElementById('planet-list') as HTMLSelectElement;
+        this.params.planets.forEach((planet, i)  => {
+            const option = list.options.item(i);
+            option.textContent = planet.name;
+            option.value = planet.name;
+        });
+        
+    }
     updateParamsWithLiveValue(index: number) {
-        const planet = this.params.planets[index] = this.solarSystem.planets[index].getParams();
+        this.params.planets[index]= this.solarSystem.planets[index].getParams();
+        const planet = this.params.planets[index]; 
         this.inputView.set(planet);
     }
     addNewPlanet() {
@@ -148,6 +154,7 @@ export class SolarSystemStarter extends Boilerplate {
                 this.inputView.y_vel.valueAsNumber,
                 this.inputView.z_vel.valueAsNumber);
             obj.mass = this.inputView.mass.valueAsNumber;
+            obj.name = this.inputView.name.value;
             return obj;
         }
     }
@@ -161,6 +168,7 @@ export class SolarSystemStarter extends Boilerplate {
         view.y_vel = (document.getElementById("y_vel") as HTMLInputElement);
         view.z_vel = (document.getElementById("z_vel") as HTMLInputElement);
         view.mass = (document.getElementById("mass") as HTMLInputElement);
+        view.name = (document.getElementById("p_name") as HTMLInputElement);
         return view;
     }
 
@@ -212,11 +220,10 @@ export class SolarSystemStarter extends Boilerplate {
             this.raycaster.ray.intersectPlane(new Plane(new Vector3(0, 0, -1), 0), target)
             const index = this.pointSelected.userData.index;
             this.solarSystem.planets[index].setPosition(target.x, target.y, target.z);
-            this.updateParamsWithLiveValue(index);
             const list = document.getElementById('planet-list') as HTMLSelectElement;
             list.selectedIndex = index;
-            console.log("dragging");
-            this.selectPlanet(index);
+            this.selectPlanet();
+            this.updateParamsWithLiveValue(index);
         }
     }
 
@@ -237,7 +244,7 @@ export class ParamsInputView {
     y_vel: HTMLInputElement;
     z_vel: HTMLInputElement;
     mass: HTMLInputElement;
-
+    name: HTMLInputElement;
     set(planet: PlanetParams) {
         this.x_pos.valueAsNumber = planet.position.x;
         this.y_pos.valueAsNumber = planet.position.y;
@@ -246,6 +253,6 @@ export class ParamsInputView {
         this.y_vel.valueAsNumber = planet.velocity.y;
         this.z_vel.valueAsNumber = planet.velocity.z;
         this.mass.valueAsNumber = planet.mass;
-        
+        this.name.value = planet.name;
     }
 }
