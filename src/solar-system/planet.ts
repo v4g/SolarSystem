@@ -14,6 +14,10 @@ export class PlanetParams {
         if (mass) this.mass = mass; else this.mass = 1;
         if (color) this.color = color; else this.color = "#ffff00";        
     }
+
+    clone(): PlanetParams {
+        return new PlanetParams(this.name, this.position.clone(), this.velocity.clone(), this.color, this.mass)
+    }
 }
 
 export class Planet implements IParticle{

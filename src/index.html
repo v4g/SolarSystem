@@ -17,28 +17,51 @@
 </head>
 
 <body>
-	<div class='HUD'>
-		<label for="planet-list">Planets</label>
-		<select name="planet-list" id="planet-list" size="4">
-		</select>
-		<input type="button" id="add-planet" name="add-planet" value="Add Planet">
-		<input type="button" id="remove-planet" name="remove-planet" value="Remove Planet">
-		<label for="pos_x">Position Vector:</label>
-		<input type="number" id="x_pos" name="pos_x">
-		<input type="number" id="y_pos" name="pos_y">
-		<input type="number" id="z_pos" name="pos_z">
-		<label for="vel_x">Velocity:</label>
-		<input type="number" id="x_vel" name="vel_x">
-		<input type="number" id="y_vel" name="vel_y">
-		<input type="number" id="z_vel" name="vel_z">
-		<label for="mass">Mass</label>
-		<input type="number" id="mass" name="mass">
-		<label for="p_name">Name</label>
-		<input type="string" id="p_name" name="p_name">
-		
-		<input type="button" id="reset-sim" value="Reset Simulation">
-		<input type="submit" value="Reload Values">
-		<input type="submit" id="pause-sim" value="Pause Simulation">
+	<div class='flex-row HUD'>
+		<div class="flex-row">
+			<div class="flex-col">
+				<div style="border-radius: 10px; overflow: hidden;">
+					<select name="planet-list" style="border-radius: 10px; overflow:auto; width: 100%;" id="planet-list" size="4">
+					</select>
+				</div>
+				<div class="flex-row">
+					<button id="add-planet" name="add-planet">Add Planet</button>
+					<button id="remove-planet" name="remove-planet">Remove Planet</button>
+				</div>
+			</div>
+		</div>
+		<div class="container">
+			<div class="flex-col">
+				<div class="flex-row">
+					<label for="pos_x" class="std-label">Position</label>
+					<input type="number" class="number-input" id="x_pos" name="pos_x">
+					<input type="number" class="number-input" id="y_pos" name="pos_y">
+					<input type="number" class="number-input" id="z_pos" name="pos_z">
+				</div>
+				<div class="flex-row">
+					<label for="vel_x" class="std-label">Velocity</label>
+					<input type="number" class="number-input" id="x_vel" name="vel_x">
+					<input type="number" class="number-input" id="y_vel" name="vel_y">
+					<input type="number" class="number-input" id="z_vel" name="vel_z">
+				</div>
+				<div class="flex-row">
+					<label for="mass" class="std-label">Mass</label>
+					<input type="number" class="number-input" id="mass" name="mass">
+				</div>
+				<div class="flex-row">
+					<label for="p_name" class="std-label">Name</label>
+					<input type="string" class="number-input" id="p_name" name="p_name">
+				</div>
+			</div>
+		</div>
+
+		<div class="container">
+			<div class="flex-col">
+				<button id="reset-sim">Reset</button>
+				<button id="lock-value">Lock</button>
+				<button id="pause-sim">Pause</button>
+			</div>
+		</div>
 	</div>
 </body>
 

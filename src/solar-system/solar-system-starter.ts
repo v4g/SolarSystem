@@ -2,6 +2,7 @@ import { Boilerplate } from "../boilerplate/boilerplate";
 import { Vector3, Plane } from "three";
 import { SolarSystem, SolarSystemParams } from "./solar-system";
 import { PlanetParams } from "./planet";
+import { timeStamp } from "console";
 
 export class SolarSystemStarter extends Boilerplate {
     solarSystem: SolarSystem;
@@ -11,6 +12,7 @@ export class SolarSystemStarter extends Boilerplate {
     pauseSimulation: boolean;
     pauseSimButton: HTMLInputElement;
     mousemoveListener: any;
+    startParams: SolarSystemParams;
     // Post creation hook 
     postInitHook() {
         this.renderer.domElement.addEventListener('mousedown', this.onMouseDown.bind(this), false);
@@ -21,23 +23,18 @@ export class SolarSystemStarter extends Boilerplate {
         this.solarSystem = new SolarSystem(SolarSystem.defaultSimParams());
         this.scene.add(this.solarSystem.group);
         this.params = SolarSystem.defaultSimParams();
+        this.startParams = this.params.clone();
         this.pauseSimButton = document.getElementById("pause-sim") as HTMLInputElement;
         this.pauseSimButton.addEventListener("click", this.pauseResume.bind(this));
 
         document.getElementById("reset-sim").addEventListener("click", this.simulate.bind(this));
         document.getElementById("add-planet").addEventListener("click", this.addNewPlanet.bind(this));
         document.getElementById("remove-planet").addEventListener("click", this.removePlanet.bind(this));
+        document.getElementById("lock-value").addEventListener("click", this.lockValues.bind(this));
         document.getElementById("planet-list").addEventListener("change", this.selectPlanet.bind(this));
-        const list = document.getElementById("planet-list") as HTMLSelectElement;
-        this.params.planets.forEach(planet => {
-            const option = document.createElement("option");
-            option.textContent = planet.name;
-            option.value = planet.name;
-            list.options.add(option);
-
-        });
         this.inputView = this.getInputView();
-        this.pauseSimulation = false;
+        this.buildPlanetOptions();
+        this.resume();
     }
 
     // Use this function to place all animation code
@@ -45,7 +42,24 @@ export class SolarSystemStarter extends Boilerplate {
         if (this.solarSystem != null && !this.pauseSimulation) {
             this.t += 0.001;
             this.solarSystem.update(this.t);
+            this.updateParamsWithLiveValues();
+            if (this.selectedPlanetIndex >= 0) {
+                this.inputView.set(this.params.planets[this.selectedPlanetIndex]);
+            }
         }
+    }
+
+    buildPlanetOptions() {
+        const list = document.getElementById("planet-list") as HTMLSelectElement;
+        for (let i = list.options.length; i >= 0; i--) {
+            list.options.remove(i);
+        }
+        this.params.planets.forEach(planet => {
+            const option = document.createElement("option");
+            option.textContent = planet.name;
+            option.value = planet.name;
+            list.options.add(option);
+        });        
     }
     pauseResume() {
         if (this.pauseSimulation) {
@@ -55,12 +69,24 @@ export class SolarSystemStarter extends Boilerplate {
         }
     }
     pause() {
-        this.pauseSimButton.value = "Resume Simulation";
+        this.pauseSimButton.textContent = "Resume";
         this.pauseSimulation = true;
+        this.inputView.enable();
     }
     resume() {
-        this.pauseSimButton.value = "Pause Simulation";
+        this.pauseSimButton.textContent = "Pause";
         this.pauseSimulation = false;
+        this.inputView.disable();
+    }
+
+    /**
+     * Saves the current state of the inputs as the values to reset the simulation
+     * to
+     */
+    lockValues() {
+        this.selectPlanet();
+        console.log("Locking");
+        this.startParams = this.params.clone();
     }
     /** 
      * This function destroys the old simulation and starts a new one based on
@@ -72,7 +98,11 @@ export class SolarSystemStarter extends Boilerplate {
             this.solarSystem.destroy();
         }
         this.selectPlanet();
-        this.solarSystem = new SolarSystem(this.params);
+        this.solarSystem = new SolarSystem(this.startParams);
+        this.params = this.startParams.clone();
+        this.buildPlanetOptions();
+        if (this.selectedPlanetIndex >= this.params.planets.length)
+            this.selectedPlanetIndex = -1;
         this.scene.add(this.solarSystem.group);
     }
 
@@ -105,35 +135,49 @@ export class SolarSystemStarter extends Boilerplate {
 
     updatePlanetOptions() {
         const list = document.getElementById('planet-list') as HTMLSelectElement;
-        this.params.planets.forEach((planet, i)  => {
+        this.params.planets.forEach((planet, i) => {
             const option = list.options.item(i);
             option.textContent = planet.name;
             option.value = planet.name;
         });
-        
+
     }
+    updateParamsWithLiveValues() {
+        for (let i = 0; i < this.params.planets.length; i++) {
+            this.params.planets[i] = this.solarSystem.planets[i].getParams();
+        }
+    }
+
     updateParamsWithLiveValue(index: number) {
-        this.params.planets[index]= this.solarSystem.planets[index].getParams();
-        const planet = this.params.planets[index]; 
+        this.params.planets[index] = this.solarSystem.planets[index].getParams();
+        const planet = this.params.planets[index];
         this.inputView.set(planet);
     }
     addNewPlanet() {
-        this.params.planets.push(new PlanetParams());
+        const len = this.params.planets.push(new PlanetParams());
         this.addPlanetOption(new PlanetParams());
         const list = document.getElementById('planet-list') as HTMLSelectElement;
-        list.selectedIndex = list.length - 1;
+        // Why isn't the list on change being called here?
+        list.selectedIndex = list.options.length - 1;
+        this.selectedPlanetIndex = list.selectedIndex;
+        this.solarSystem.addPlanet(this.params.planets[len - 1]);
+        this.updateParamsWithLiveValue(this.selectedPlanetIndex);
+        this.pause();
     }
 
     removePlanet() {
         const list = document.getElementById('planet-list') as HTMLSelectElement;
         this.selectedPlanetIndex = list.selectedIndex;
+        const selected = list.selectedIndex;
         if (this.selectedPlanetIndex >= 0) {
             this.params.planets.splice(this.selectedPlanetIndex);
             const list = document.getElementById('planet-list') as HTMLSelectElement;
             list.options.remove(this.selectedPlanetIndex);
         }
-        this.selectedPlanetIndex -= 1;
-        list.selectedIndex = this.selectedPlanetIndex;
+        this.selectedPlanetIndex = -1;
+        list.selectedIndex = selected - 1;
+        this.selectedPlanetIndex = list.selectedIndex;
+        this.updateParamsView();
 
     }
     addPlanetOption(planet: PlanetParams) {
@@ -207,29 +251,33 @@ export class SolarSystemStarter extends Boilerplate {
         if (intersected) {
             this.pause();
             this.renderer.domElement.addEventListener('mousemove', this.mousemoveListener);
+            this.onPlanetClicked(e);
         }
     }
 
     mouseDragPoint(e: any) {
         if (this.pointSelected != null) {
-
-            this.mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-            this.mouse.y = - (e.clientY / window.innerHeight) * 2 + 1;
-            let target = new Vector3();
-            this.raycaster.setFromCamera(this.mouse, this.camera);
-            this.raycaster.ray.intersectPlane(new Plane(new Vector3(0, 0, -1), 0), target)
-            const index = this.pointSelected.userData.index;
-            this.solarSystem.planets[index].setPosition(target.x, target.y, target.z);
-            const list = document.getElementById('planet-list') as HTMLSelectElement;
-            list.selectedIndex = index;
-            this.selectPlanet();
-            this.updateParamsWithLiveValue(index);
+            this.onPlanetClicked(e);
         }
     }
 
     onMouseUp(e: any) {
         this.renderer.domElement.removeEventListener('mousemove', this.mousemoveListener);
     }
+
+    onPlanetClicked(e: any) {
+        this.mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+        this.mouse.y = - (e.clientY / window.innerHeight) * 2 + 1;
+        let target = new Vector3();
+        this.raycaster.setFromCamera(this.mouse, this.camera);
+        this.raycaster.ray.intersectPlane(new Plane(new Vector3(0, 0, -1), 0), target)
+        const index = this.pointSelected.userData.index;
+        this.solarSystem.planets[index].setPosition(target.x, target.y, target.z);
+        const list = document.getElementById('planet-list') as HTMLSelectElement;
+        list.selectedIndex = index;
+        this.selectPlanet();
+        this.updateParamsWithLiveValue(index);
+}
 }
 
 /**
@@ -246,13 +294,35 @@ export class ParamsInputView {
     mass: HTMLInputElement;
     name: HTMLInputElement;
     set(planet: PlanetParams) {
-        this.x_pos.valueAsNumber = planet.position.x;
-        this.y_pos.valueAsNumber = planet.position.y;
-        this.z_pos.valueAsNumber = planet.position.z;
-        this.x_vel.valueAsNumber = planet.velocity.x;
-        this.y_vel.valueAsNumber = planet.velocity.y;
-        this.z_vel.valueAsNumber = planet.velocity.z;
+        this.x_pos.valueAsNumber = parseFloat(planet.position.x.toPrecision(2));
+        this.y_pos.valueAsNumber = parseFloat(planet.position.y.toPrecision(2));
+        this.z_pos.valueAsNumber = parseFloat(planet.position.z.toPrecision(2));
+        this.x_vel.valueAsNumber = parseFloat(planet.velocity.x.toPrecision(2));
+        this.y_vel.valueAsNumber = parseFloat(planet.velocity.y.toPrecision(2));
+        this.z_vel.valueAsNumber = parseFloat(planet.velocity.z.toPrecision(2));
         this.mass.valueAsNumber = planet.mass;
         this.name.value = planet.name;
+    }
+
+    enable() {
+        this.x_pos.disabled = false;
+        this.y_pos.disabled = false;
+        this.z_pos.disabled = false;
+        this.x_vel.disabled = false;
+        this.y_vel.disabled = false;
+        this.z_vel.disabled = false;
+        this.mass.disabled = false;
+        this.name.disabled = false;
+    }
+
+    disable() {
+        this.x_pos.disabled = true;
+        this.y_pos.disabled = true;
+        this.z_pos.disabled = true;
+        this.x_vel.disabled = true;
+        this.y_vel.disabled = true;
+        this.z_vel.disabled = true;
+        this.mass.disabled = true;
+        this.name.disabled = true;
     }
 }
