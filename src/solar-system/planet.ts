@@ -1,4 +1,4 @@
-import { SphereBufferGeometry, MeshBasicMaterial, Mesh, Vector3 } from "three";
+import { SphereBufferGeometry, MeshBasicMaterial, Mesh, Vector3, ArrowHelper } from "three";
 import { IParticle, ParticleDerivative, Particle } from "../particle-system/particle-system";
 
 export class PlanetParams {
@@ -28,6 +28,7 @@ export class Planet implements IParticle{
     mesh: Mesh;
     particle: Particle;
     color: string;
+    private _velocityMesh: ArrowHelper;
     constructor(name: string, radius: number, color: string, mass?: number) {
         this.name = name;
         this.geometry = new SphereBufferGeometry(radius);
@@ -47,10 +48,13 @@ export class Planet implements IParticle{
     getVelocity(): Vector3 { return this.particle.getVelocity(); };
     getPosition(): Vector3 { return this.position()};
     setPosition(x: number, y: number, z: number): Vector3 {
-        return this.position(new Vector3(x,y,z));
+        const pos = this.position(new Vector3(x,y,z));
+        return pos;
     };
     setVelocity(x: number, y: number, z: number): Vector3 {
-        return this.particle.setVelocity(x, y, z);
+        const vel = this.particle.setVelocity(x, y, z);
+        this.updateArrowDirection();
+        return vel;
     }
     getParams():PlanetParams {
         return new PlanetParams(this.name, this.getPosition(), this.getVelocity(), this.color, this.getMass());
@@ -62,5 +66,26 @@ export class Planet implements IParticle{
     }
     destroy() {
         this.geometry.dispose();
+    }
+    get velocityMesh() {
+        return this._velocityMesh;
+    }
+
+    set velocityMesh(mesh: ArrowHelper) {
+        this._velocityMesh = mesh;
+        this.mesh.add(this._velocityMesh);
+        this._velocityMesh.position.set(0, 0, 0);
+        console.log(this._velocityMesh);
+    }
+
+    private updateArrowDirection() {
+        if (this._velocityMesh) {
+            this._velocityMesh.setDirection(this.getVelocity().normalize());
+            this._velocityMesh.scale.setY(this.getVelocity().length());
+        }
+    }
+
+    velocityVisible(b: boolean) {
+        this._velocityMesh.visible = b;
     }
 };

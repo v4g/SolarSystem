@@ -1,4 +1,4 @@
-import { Group, Vector3 } from "three";
+import { Group, Vector3, Geometry, ArrowHelper } from "three";
 import { Planet, PlanetParams } from "./planet";
 import { PlanetOrbit } from "./planet-orbit";
 import { ParticleSystem, GravityForce } from "../particle-system/particle-system";
@@ -22,34 +22,31 @@ export class SolarSystemParams {
 }
 
 export class SolarSystem {
-    PLANETS = [
-        //name  radii color    x_pos y_vel mass
-        // ['sun', 2.5, '#ffff00', 0, 26,  1,    0, 40],
-        // ['mercury', 0.5, '#ffff00', -10, -10, 0, 1, 40],
-        // ['venus', 0.5, '#ffff00', -10, 10,  1, 0, 40],
-        // ['earth', 0.5, '#ffff00', 10, 10, 0, -1, 40],
-        // ['mars', 0.5, '#ffff00', 10, -10, -1, 0, 40],
-        ['mercury', 0.5, '#ffff00', -10, 0, 0, 1, 40],
-        ['venus', 0.5, '#ffff00', -10, 10, 0.866, -0.5, 40],
-        ['earth', 0.5, '#ffff00', -2.33, 5, -0.866, -0.5, 40],
-    ];
+    static ARROW_SCALE = 4;
     group: Group;
     planets: Array<Planet>;
     orbits: Array<PlanetOrbit>;
     sun: Planet;
     particleSystem: ParticleSystem;
+    velocityArrows: Group;
+    velocityGeometry: ArrowHelper;
+    gravity: GravityForce;
     constructor(simParams?: SolarSystemParams) {
         this.group = new Group();
         this.planets = [];
         this.orbits = [];
         this.particleSystem = new ParticleSystem();
-        this.particleSystem.addForce(new GravityForce());
+        this.gravity = new GravityForce();
+        this.particleSystem.addForce(this.gravity);
+        this.velocityGeometry = new ArrowHelper(new Vector3(1, 0, 0), new Vector3(), SolarSystem.ARROW_SCALE, 0xff0000);
+        this.velocityGeometry.scale.set(2, 1, 1);
         this.createPlanets(simParams);
+        this.velocitiesVisible(false);
     }
     static defaultSimParams() {
         let params = new SolarSystemParams();
-        params.planets.push(new PlanetParams('mercury', new Vector3(0, 0, 0), new Vector3(0, 1, 0), '#ffff00', 10));
-        params.planets.push(new PlanetParams('venus', new Vector3(10, 0, 0), new Vector3(0, -1, 0), '#ffff00', 10));
+        params.planets.push(new PlanetParams('mercury', new Vector3(0, 0, 0), new Vector3(0, 1, 0), '#57a5c9', 10));
+        params.planets.push(new PlanetParams('venus', new Vector3(10, 0, 0), new Vector3(0, -1, 0), '#57a5c9', 10));
         return params;
     }
 
@@ -58,10 +55,10 @@ export class SolarSystem {
         this.planets.push(planet);
         planet.mesh.userData.index = this.planets.length - 1;
         this.group.add(planet.mesh);
+        planet.velocityMesh = new ArrowHelper(new Vector3(1, 0, 0), new Vector3(), SolarSystem.ARROW_SCALE, 0xff0000);
         this.particleSystem.addParticle(planet);
         planet.setPosition(params.position.x, params.position.y, params.position.z);
         planet.setVelocity(params.velocity.x, params.velocity.y, params.velocity.z);
-
     }
     createPlanets(simParams?: SolarSystemParams) {
         if (!simParams) {
@@ -71,8 +68,7 @@ export class SolarSystem {
             this.addPlanet(p);
         }, this);
     }
-    update(t: number) {
-        const time_step = 0.01;
+    update(time_step: number) {
         this.particleSystem.updateMidPoint(time_step);
     }
 
@@ -83,5 +79,11 @@ export class SolarSystem {
         this.planets = [];
         this.particleSystem.destroy();
 
+    }
+
+    velocitiesVisible(b: boolean) {
+        this.planets.forEach(p=> {
+            p.velocityVisible(b);
+        });
     }
 }

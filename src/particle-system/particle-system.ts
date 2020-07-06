@@ -39,7 +39,7 @@ export interface IForce {
 }
 
 export class GravityForce implements IForce {
-    G: number;
+    private _G: number;
     constructor(G?: number) {
         if (G) this.G = G;
         else this.G = 1;
@@ -56,6 +56,14 @@ export class GravityForce implements IForce {
             f2 = unit_r.clone().multiplyScalar(this.G * p1.getMass() / r);
         }
         return [f1, f2];
+    }
+
+    set G(g: number) {
+        this._G = g;
+    }
+
+    get G():number {
+        return this._G;
     }
 }
 /**

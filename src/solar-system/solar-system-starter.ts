@@ -1,8 +1,7 @@
 import { Boilerplate } from "../boilerplate/boilerplate";
 import { Vector3, Plane } from "three";
 import { SolarSystem, SolarSystemParams } from "./solar-system";
-import { PlanetParams } from "./planet";
-import { timeStamp } from "console";
+import { PlanetParams } from "./planet";;
 
 export class SolarSystemStarter extends Boilerplate {
     solarSystem: SolarSystem;
@@ -10,16 +9,22 @@ export class SolarSystemStarter extends Boilerplate {
     selectedPlanetIndex = -1;
     inputView: ParamsInputView;
     pauseSimulation: boolean;
-    pauseSimButton: HTMLInputElement;
     mousemoveListener: any;
     startParams: SolarSystemParams;
+    velocityVisible: boolean;
+    simulationSpeed: number;
+    gConstant: HTMLInputElement
+    pauseSimButton: HTMLInputElement;
+    checkbox: HTMLInputElement;
+    simSpeedHTML: HTMLInputElement;
     // Post creation hook 
     postInitHook() {
         this.renderer.domElement.addEventListener('mousedown', this.onMouseDown.bind(this), false);
         this.renderer.domElement.addEventListener('mouseup', this.onMouseUp.bind(this), false);
         this.mousemoveListener = this.mouseDragPoint.bind(this);
         this.t = 0;
-
+        this.simulationSpeed = 0.01;
+    
         this.solarSystem = new SolarSystem(SolarSystem.defaultSimParams());
         this.scene.add(this.solarSystem.group);
         this.params = SolarSystem.defaultSimParams();
@@ -32,16 +37,24 @@ export class SolarSystemStarter extends Boilerplate {
         document.getElementById("remove-planet").addEventListener("click", this.removePlanet.bind(this));
         document.getElementById("lock-value").addEventListener("click", this.lockValues.bind(this));
         document.getElementById("planet-list").addEventListener("change", this.selectPlanet.bind(this));
+        this.simSpeedHTML = document.getElementById("sim-speed") as HTMLInputElement;
+        this.simSpeedHTML.addEventListener("change", this.updateSimSpeed.bind(this));
+        this.simSpeedHTML.valueAsNumber = this.simulationSpeed;
+        this.gConstant = document.getElementById("g-constant") as HTMLInputElement;
+        this.gConstant.valueAsNumber = this.solarSystem.gravity.G;
+        this.gConstant.addEventListener("change", this.updateGConstant.bind(this));
+        this.checkbox = document.getElementById("velocity-visible") as HTMLInputElement;
+        this.checkbox.addEventListener("change", this.setVelocityVisibility.bind(this));
         this.inputView = this.getInputView();
         this.buildPlanetOptions();
+        this.velocityVisible = false;
         this.resume();
     }
 
     // Use this function to place all animation code
     animateHook() {
         if (this.solarSystem != null && !this.pauseSimulation) {
-            this.t += 0.001;
-            this.solarSystem.update(this.t);
+            this.solarSystem.update(this.simulationSpeed);
             this.updateParamsWithLiveValues();
             if (this.selectedPlanetIndex >= 0) {
                 this.inputView.set(this.params.planets[this.selectedPlanetIndex]);
@@ -72,11 +85,14 @@ export class SolarSystemStarter extends Boilerplate {
         this.pauseSimButton.textContent = "Resume";
         this.pauseSimulation = true;
         this.inputView.enable();
+        this.solarSystem.velocitiesVisible(true);
     }
     resume() {
         this.pauseSimButton.textContent = "Pause";
         this.pauseSimulation = false;
         this.inputView.disable();
+        this.solarSystem.velocitiesVisible(this.velocityVisible);
+
     }
 
     /**
@@ -100,7 +116,9 @@ export class SolarSystemStarter extends Boilerplate {
         this.selectPlanet();
         this.solarSystem = new SolarSystem(this.startParams);
         this.params = this.startParams.clone();
+        this.solarSystem.velocitiesVisible(this.velocityVisible);
         this.buildPlanetOptions();
+        this.updateGConstant();
         if (this.selectedPlanetIndex >= this.params.planets.length)
             this.selectedPlanetIndex = -1;
         this.scene.add(this.solarSystem.group);
@@ -118,7 +136,6 @@ export class SolarSystemStarter extends Boilerplate {
         if (this.selectedPlanetIndex >= 0) {
             this.params.planets[this.selectedPlanetIndex] = this.buildPlanetSimParamsObj();
         }
-        console.log("Selected Befoe", this.selectedPlanetIndex);
         this.selectedPlanetIndex = list.selectedIndex;
         this.updateParamsView();
     }
@@ -203,6 +220,10 @@ export class SolarSystemStarter extends Boilerplate {
         }
     }
 
+    velocitiesVisible(b: boolean) {
+        this.solarSystem.velocitiesVisible(b);
+    }
+
     getInputView(): ParamsInputView {
         let view = new ParamsInputView();
         view.x_pos = (document.getElementById("x_pos") as HTMLInputElement);
@@ -246,16 +267,18 @@ export class SolarSystemStarter extends Boilerplate {
         }
         return intersected;
     }
-    onMouseDown(e: any) {
+    onMouseDown(e: MouseEvent) {
         let intersected = this.raycast(e);
         if (intersected) {
             this.pause();
             this.renderer.domElement.addEventListener('mousemove', this.mousemoveListener);
             this.onPlanetClicked(e);
+            if (e.button == 2)
+                e.preventDefault();
         }
     }
 
-    mouseDragPoint(e: any) {
+    mouseDragPoint(e: MouseEvent) {
         if (this.pointSelected != null) {
             this.onPlanetClicked(e);
         }
@@ -265,19 +288,43 @@ export class SolarSystemStarter extends Boilerplate {
         this.renderer.domElement.removeEventListener('mousemove', this.mousemoveListener);
     }
 
-    onPlanetClicked(e: any) {
+    onPlanetClicked(e: MouseEvent) {
         this.mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
         this.mouse.y = - (e.clientY / window.innerHeight) * 2 + 1;
         let target = new Vector3();
         this.raycaster.setFromCamera(this.mouse, this.camera);
         this.raycaster.ray.intersectPlane(new Plane(new Vector3(0, 0, -1), 0), target)
         const index = this.pointSelected.userData.index;
-        this.solarSystem.planets[index].setPosition(target.x, target.y, target.z);
+        console.log(e.buttons);
+        if (e.buttons == 1) { //left button clicked
+            this.solarSystem.planets[index].setPosition(target.x, target.y, target.z);
+        }
+        else if (e.buttons == 2) { //right button clicked
+            const planet = this.solarSystem.planets[index];
+            const vel = target.sub(planet.getPosition()).divideScalar(SolarSystem.ARROW_SCALE);
+            planet.setVelocity(vel.x, vel.y, vel.z);
+        }
         const list = document.getElementById('planet-list') as HTMLSelectElement;
         list.selectedIndex = index;
         this.selectPlanet();
         this.updateParamsWithLiveValue(index);
-}
+    }
+    setVelocityVisibility(e: InputEvent) {
+        this.velocityVisible = this.checkbox.checked;
+        if(this.checkbox.checked) {
+            this.velocitiesVisible(true);
+        } else {
+            this.velocitiesVisible(false);
+        }
+    }
+
+    updateGConstant() {
+        this.solarSystem.gravity.G = this.gConstant.valueAsNumber;
+    }
+
+    updateSimSpeed() {
+        this.simulationSpeed = this.simSpeedHTML.valueAsNumber;
+    }
 }
 
 /**

@@ -21,7 +21,8 @@
 		<div class="flex-row">
 			<div class="flex-col">
 				<div style="border-radius: 10px; overflow: hidden;">
-					<select name="planet-list" style="border-radius: 10px; overflow:auto; width: 100%;" id="planet-list" size="4">
+					<select name="planet-list" style="border-radius: 10px; overflow:auto; width: 100%;" id="planet-list"
+						size="4">
 					</select>
 				</div>
 				<div class="flex-row">
@@ -54,8 +55,23 @@
 				</div>
 			</div>
 		</div>
-
 		<div class="container">
+			<div class="flex-col">
+				<div class="flex-row">
+					<label for="velocity-visible" class="std-label">Show Velocity</label>
+					<input type="checkbox" id="velocity-visible" value="show-velocity">
+				</div>
+				<div class="flex-row">
+					<label for="g-constant" class="std-label">Gravitation Constant</label>
+					<input type="number" class="number-input" id="g-constant" name="g-constant">
+				</div>
+				<div class="flex-row">
+					<label for="sim_speed" class="std-label">Simulation Speed</label>
+					<input type="number" class="number-input" id="sim-speed" name="sim-speed" step="0.01">
+				</div>
+			</div>
+		</div>
+		<div class="flex-row">
 			<div class="flex-col">
 				<button id="reset-sim">Reset</button>
 				<button id="lock-value">Lock</button>
