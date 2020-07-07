@@ -31,6 +31,11 @@ export class SolarSystem {
     velocityArrows: Group;
     velocityGeometry: ArrowHelper;
     gravity: GravityForce;
+    static readonly EARTH_TO_SUN = 147091144e3;
+    static readonly EARTHS_MASS = 5.972e24;
+    static readonly YEAR_IN_SECONDS = 3.154e7;
+    static readonly SUNS_MASS = 1.989e30;
+    static readonly EARTHS_VELOCITY = 30100; // m/s
     constructor(simParams?: SolarSystemParams) {
         this.group = new Group();
         this.planets = [];
@@ -45,8 +50,8 @@ export class SolarSystem {
     }
     static defaultSimParams() {
         let params = new SolarSystemParams();
-        params.planets.push(new PlanetParams('mercury', new Vector3(0, 0, 0), new Vector3(0, 1, 0), '#57a5c9', 10));
-        params.planets.push(new PlanetParams('venus', new Vector3(10, 0, 0), new Vector3(0, -1, 0), '#57a5c9', 10));
+        params.planets.push(new PlanetParams('Sun', new Vector3(0, 0, 0), new Vector3(0, 1, 0), '#d6d01e', 10));
+        params.planets.push(new PlanetParams('Earth', new Vector3(10, 0, 0), new Vector3(0, -1, 0), '#57a5c9', 10));
         return params;
     }
 
@@ -69,7 +74,7 @@ export class SolarSystem {
         }, this);
     }
     update(time_step: number) {
-        this.particleSystem.updateMidPoint(time_step);
+        this.particleSystem.updateRK4(time_step);
     }
 
     destroy() {

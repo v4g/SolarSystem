@@ -40,6 +40,7 @@ export interface IForce {
 
 export class GravityForce implements IForce {
     private _G: number;
+    static readonly GRAVITATION_CONSTANT = 6.67430e-11; // Value of G in m kg s
     constructor(G?: number) {
         if (G) this.G = G;
         else this.G = 1;
@@ -57,7 +58,16 @@ export class GravityForce implements IForce {
         }
         return [f1, f2];
     }
-
+    /**
+     * This method calculates the value of G for new units of distance, mass and time
+     * @kg Number of Kilograms that go into the new unit of mass
+     * @m Number of meters that go into the new unit of distance
+     * @s Number of seconds that go into the new unit of time
+     */
+    static calculate(kg:number, m:number, s:number):number {
+        const g = this.GRAVITATION_CONSTANT * kg * s * s / ( m * m * m);
+        return g;
+    }
     set G(g: number) {
         this._G = g;
     }
@@ -113,6 +123,14 @@ export class ParticleDerivative {
             p = [];
         });
         this.derivative = [];
+    }
+    clone(): ParticleDerivative {
+        const copy = new ParticleDerivative();
+        this.derivative.forEach((p, i)=>{
+            copy.addParticle();
+            copy.add(i, p);
+        });
+        return copy;
     }
 }
 /**
@@ -176,6 +194,39 @@ export class ParticleSystem {
         this.derivative.scale(time_step);
         this.restoreState(state);
         this.updateAllParticles();
+    }
+    updateRK4(time_step: number) {
+        const state = this.storeState();
+        this.calculateDerivative();
+        this.derivative.scale(time_step/2);
+        const k1 = this.derivative.clone();
+        this.updateAllParticles();
+        this.calculateDerivative();
+        this.derivative.scale(time_step/2);
+        const k2 = this.derivative.clone();
+        this.restoreState(state);
+        this.updateAllParticles();
+        this.calculateDerivative();
+        this.derivative.scale(time_step);
+        const k3 = this.derivative.clone();
+        this.restoreState(state);
+        this.updateAllParticles();
+        this.calculateDerivative();
+        this.derivative.scale(time_step);
+        const k4 = this.derivative.clone();
+        this.restoreState(state);
+        k1.scale(1/3);
+        this.derivative = k1;
+        this.updateAllParticles();
+        k2.scale(2/3);
+        this.derivative = k2;
+        this.updateAllParticles();
+        k3.scale(1/3);
+        this.derivative = k3;
+        this.updateAllParticles();
+        k4.scale(1/6);
+        this.derivative = k4;
+        this.updateAllParticles();        
     }
 
     calculateDerivative() {

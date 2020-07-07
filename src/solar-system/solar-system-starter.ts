@@ -1,7 +1,8 @@
 import { Boilerplate } from "../boilerplate/boilerplate";
 import { Vector3, Plane } from "three";
 import { SolarSystem, SolarSystemParams } from "./solar-system";
-import { PlanetParams } from "./planet";;
+import { PlanetParams } from "./planet"; import { GravityForce } from "../particle-system/particle-system";
+;
 
 export class SolarSystemStarter extends Boilerplate {
     solarSystem: SolarSystem;
@@ -17,6 +18,7 @@ export class SolarSystemStarter extends Boilerplate {
     pauseSimButton: HTMLInputElement;
     checkbox: HTMLInputElement;
     simSpeedHTML: HTMLInputElement;
+    units: ScaledUnits;
     // Post creation hook 
     postInitHook() {
         this.renderer.domElement.addEventListener('mousedown', this.onMouseDown.bind(this), false);
@@ -24,11 +26,7 @@ export class SolarSystemStarter extends Boilerplate {
         this.mousemoveListener = this.mouseDragPoint.bind(this);
         this.t = 0;
         this.simulationSpeed = 0.01;
-    
-        this.solarSystem = new SolarSystem(SolarSystem.defaultSimParams());
-        this.scene.add(this.solarSystem.group);
-        this.params = SolarSystem.defaultSimParams();
-        this.startParams = this.params.clone();
+
         this.pauseSimButton = document.getElementById("pause-sim") as HTMLInputElement;
         this.pauseSimButton.addEventListener("click", this.pauseResume.bind(this));
 
@@ -41,16 +39,42 @@ export class SolarSystemStarter extends Boilerplate {
         this.simSpeedHTML.addEventListener("change", this.updateSimSpeed.bind(this));
         this.simSpeedHTML.valueAsNumber = this.simulationSpeed;
         this.gConstant = document.getElementById("g-constant") as HTMLInputElement;
-        this.gConstant.valueAsNumber = this.solarSystem.gravity.G;
         this.gConstant.addEventListener("change", this.updateGConstant.bind(this));
         this.checkbox = document.getElementById("velocity-visible") as HTMLInputElement;
         this.checkbox.addEventListener("change", this.setVelocityVisibility.bind(this));
         this.inputView = this.getInputView();
-        this.buildPlanetOptions();
         this.velocityVisible = false;
+        this.calculateScaledG();
+
+        this.params = this.defaultSimParams();
+        this.startParams = this.params.clone();
+
+        this.solarSystem = new SolarSystem(this.params);
+        this.updateGConstant();
+        this.scene.add(this.solarSystem.group);
+
+        this.buildPlanetOptions();
         this.resume();
+
     }
 
+    defaultSimParams() {
+        let params = new SolarSystemParams();
+        params.planets.push(new PlanetParams('Sun', new Vector3(0, 0, 0), new Vector3(0, 0, 0), '#d6d01e', this.units.getScaledMass(SolarSystem.SUNS_MASS)));
+        params.planets.push(new PlanetParams('Earth', new Vector3(10, 0, 0), new Vector3(0, this.units.getScaledVelocity(SolarSystem.EARTHS_VELOCITY), 0),
+            '#57a5c9', this.units.getScaledMass(SolarSystem.EARTHS_MASS)));
+        return params;
+    }
+
+    calculateScaledG() {
+        const units = new ScaledUnits();
+        units.setKgsScale(SolarSystem.EARTHS_MASS);
+        units.setMetresScale(SolarSystem.EARTH_TO_SUN, 10);
+        units.setTimeScale(SolarSystem.YEAR_IN_SECONDS, 20 * 10);
+        const g = GravityForce.calculate(units.kgs, units.metres, units.seconds);
+        this.gConstant.valueAsNumber = g;
+        this.units = units;
+    }
     // Use this function to place all animation code
     animateHook() {
         if (this.solarSystem != null && !this.pauseSimulation) {
@@ -72,7 +96,7 @@ export class SolarSystemStarter extends Boilerplate {
             option.textContent = planet.name;
             option.value = planet.name;
             list.options.add(option);
-        });        
+        });
     }
     pauseResume() {
         if (this.pauseSimulation) {
@@ -118,6 +142,8 @@ export class SolarSystemStarter extends Boilerplate {
         this.params = this.startParams.clone();
         this.solarSystem.velocitiesVisible(this.velocityVisible);
         this.buildPlanetOptions();
+        this.calculateScaledG();
+
         this.updateGConstant();
         if (this.selectedPlanetIndex >= this.params.planets.length)
             this.selectedPlanetIndex = -1;
@@ -311,7 +337,7 @@ export class SolarSystemStarter extends Boilerplate {
     }
     setVelocityVisibility(e: InputEvent) {
         this.velocityVisible = this.checkbox.checked;
-        if(this.checkbox.checked) {
+        if (this.checkbox.checked) {
             this.velocitiesVisible(true);
         } else {
             this.velocitiesVisible(false);
@@ -371,5 +397,77 @@ export class ParamsInputView {
         this.z_vel.disabled = true;
         this.mass.disabled = true;
         this.name.disabled = true;
+    }
+}
+
+export class ScaledUnits {
+    private _metres: number; // the number of metres in new unit
+    private _kilograms: number; // the number of kilograms in new unit
+    private _seconds: number; // the number of kilograms in new unit
+
+    constructor(metres = 1, kgs = 1, seconds = 1) {
+        this._metres = metres;
+        this._kilograms = kgs;
+        this._seconds = seconds;
+    }
+    /**
+     * Sets the new unit of metres
+     * @param val The number of meters that go into the new unit wrt to the value given in to
+     * @param to 
+     */
+    setMetresScale(val: number, to = 1) {
+        this._metres = val / to;
+    }
+
+    /**
+     * Sets the new unit of kgs
+     * @param val The number of kgs that go into the new unit wrt to the value given in to
+     * @param to 
+     */
+    setKgsScale(val: number, to = 1) {
+        this._kilograms = val / to;
+    }
+    /**
+      * Sets the new unit of time
+      * @param val The number of seconds that go into the new unit wrt to the value given in to
+      * @param to 
+      */
+    setTimeScale(val: number, to = 1) {
+        this._seconds = val / to;
+    }
+    get metres(): number { return this._metres; };
+    get kgs(): number { return this._kilograms; };
+    get seconds(): number { return this._seconds; };
+
+    /**
+     * Returns value of the distance in new units
+     * @param val The distance in metres you want in the new units
+     */
+    getScaledDistance(val: number): number {
+        return val / this._metres;
+    }
+
+    /**
+     * Returns value of the mass in new units
+     * @param val The mass in kgs you want in the new units
+     */
+    getScaledMass(val: number): number {
+        return val / this._kilograms;
+    }
+
+    /**
+     * Returns value of the time in new units
+     * @param val The time in seconds you want in the new units
+     */
+    getScaledTime(val: number): number {
+        return val / this._seconds;
+    }
+
+    /**
+     * Returns value of the velocity in new units
+     * @param val The velocity in metres/second you want in the new units
+     */
+    getScaledVelocity(val: number): number {
+        return val * this.seconds / this.metres;
     }
 }
