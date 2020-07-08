@@ -31,11 +31,20 @@ export class SolarSystem {
     velocityArrows: Group;
     velocityGeometry: ArrowHelper;
     gravity: GravityForce;
-    static readonly EARTH_TO_SUN = 147091144e3;
-    static readonly EARTHS_MASS = 5.972e24;
     static readonly YEAR_IN_SECONDS = 3.154e7;
     static readonly SUNS_MASS = 1.989e30;
-    static readonly EARTHS_VELOCITY = 30100; // m/s
+    // Earth
+    static readonly EARTH_TO_SUN = 147091144e3;
+    static readonly EARTHS_MASS = 5.972e24;
+    static readonly EARTHS_VELOCITY = 30300; // at perihelion m/s
+    // Mars
+    static readonly MARS_TO_SUN = 206.62e9;
+    static readonly MARS_MASS = 0.64171e24;
+    static readonly MARS_VELOCITY = 26.50e3; // at perihelion m/s
+    // Moon
+    static readonly MOONS_MASS = 0.07346e24;
+    static readonly MOONS_VELOCITY = 31270; // at apogee m/s
+    static readonly EARTH_TO_MOON = 405.5e6; // at apogee m
     constructor(simParams?: SolarSystemParams) {
         this.group = new Group();
         this.planets = [];
@@ -56,7 +65,7 @@ export class SolarSystem {
     }
 
     addPlanet(params: PlanetParams) {
-        const planet = new Planet(params.name, 0.5, params.color, params.mass)
+        const planet = new Planet(params.name, params.radius, params.color, params.mass)
         this.planets.push(planet);
         planet.mesh.userData.index = this.planets.length - 1;
         this.group.add(planet.mesh);

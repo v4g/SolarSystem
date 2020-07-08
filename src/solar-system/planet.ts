@@ -1,5 +1,6 @@
 import { SphereBufferGeometry, MeshBasicMaterial, Mesh, Vector3, ArrowHelper } from "three";
 import { IParticle, ParticleDerivative, Particle } from "../particle-system/particle-system";
+import { ScaledUnits } from "./solar-system-starter";
 
 export class PlanetParams {
     name: string;
@@ -7,16 +8,28 @@ export class PlanetParams {
     velocity: Vector3;
     color: string;
     mass: number;
-    constructor(name?: string, position?: Vector3, velocity?: Vector3, color?: string, mass?: number) {
+    radius: number
+    constructor(name?: string, position?: Vector3, velocity?: Vector3, color?: string, mass?: number, radius = 0.5) {
         if (position) this.position = position; else this.position = new Vector3();
         if (velocity) this.velocity = velocity; else this.velocity = new Vector3();
         if (name) this.name = name; else this.name = "Planet";
         if (mass) this.mass = mass; else this.mass = 1;
         if (color) this.color = color; else this.color = "#ffff00";        
+        this.radius = radius;
     }
 
     clone(): PlanetParams {
-        return new PlanetParams(this.name, this.position.clone(), this.velocity.clone(), this.color, this.mass)
+        return new PlanetParams(this.name, this.position.clone(), this.velocity.clone(), this.color, this.mass, this.radius);
+    }
+
+    convertUnits(unit: ScaledUnits) {
+        this.position.x = unit.getScaledDistance(this.position.x);
+        this.position.y = unit.getScaledDistance(this.position.y);
+        this.position.z = unit.getScaledDistance(this.position.z);
+        this.velocity.x = unit.getScaledVelocity(this.velocity.x);
+        this.velocity.y = unit.getScaledVelocity(this.velocity.y);
+        this.velocity.z = unit.getScaledVelocity(this.velocity.z);
+        this.mass = unit.getScaledMass(this.mass);
     }
 }
 

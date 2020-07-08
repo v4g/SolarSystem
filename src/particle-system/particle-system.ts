@@ -53,8 +53,8 @@ export class GravityForce implements IForce {
         let f2 = new Vector3();
         if (r > 0) {
             const unit_r = r_vec.normalize();
-            f1 = unit_r.clone().multiplyScalar(-this.G * p2.getMass() / r);
-            f2 = unit_r.clone().multiplyScalar(this.G * p1.getMass() / r);
+            f1 = unit_r.clone().multiplyScalar(-this.G * p2.getMass() / (r));
+            f2 = unit_r.clone().multiplyScalar(this.G * p1.getMass() / (r));
         }
         return [f1, f2];
     }
@@ -232,15 +232,15 @@ export class ParticleSystem {
     calculateDerivative() {
         // clear the derivative first
         this.derivative.clear();
-
+        this.particles.forEach((p, i) => {
+            this.derivative.add(i, [p.getVelocity().x, p.getVelocity().y, p.getVelocity().z, 0, 0, 0]);
+        })
         this.forces.forEach(force => {
             for (let i = 1; i < this.particles.length; i++) {
                 for (let j = 0; j < i; j++) {
                     let forces = force.apply(this.particles[i], this.particles[j]);
-                    const v1 = this.particles[i].getVelocity();
-                    const v2 = this.particles[j].getVelocity();
-                    this.derivative.add(i, [v1.x, v1.y, v1.z, forces[0].x, forces[0].y, forces[0].z]);
-                    this.derivative.add(j, [v2.x, v2.y, v2.z, forces[1].x, forces[1].y, forces[1].z]);
+                    this.derivative.add(i, [0, 0, 0, forces[0].x, forces[0].y, forces[0].z]);
+                    this.derivative.add(j, [0, 0, 0, forces[1].x, forces[1].y, forces[1].z]);
                 }
             }
         }, this);

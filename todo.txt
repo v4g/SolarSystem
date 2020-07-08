@@ -13,8 +13,9 @@ X Fix adding a planet doesn't automatically select it
 X Style the UI - Used flexbox CSS to make the UI pretty
 X Add velocity selection through mouse right click
 X Add gravitation constant and simulation speed parameters
-At higher simulation speeds, the simulation becomes unstable and keeps adding an error in every revolution
-    We need RK-3 because acceleration is also changing with time and therefore needs to be accounted for
+X At higher simulation speeds, the simulation becomes unstable and keeps adding an error in every revolution
+X    We need RK-4 because acceleration is also changing with time and therefore needs to be accounted for
+Add zoom to be able to better see the moons orbit
 Update the name to reflect the new name even if the simulation is reset and the planet is clicked in GUI
 What happens if a bunch of planets start at the same point and some sort of
     accumulation code is written that accumulates planets that come too close
