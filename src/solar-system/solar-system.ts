@@ -74,6 +74,13 @@ export class SolarSystem {
         planet.setPosition(params.position.x, params.position.y, params.position.z);
         planet.setVelocity(params.velocity.x, params.velocity.y, params.velocity.z);
     }
+
+    removePlanet(i: number) {
+        this.particleSystem.removeParticle(i);
+        this.group.remove(this.planets[i].mesh);
+        this.planets[i].destroy();
+        this.planets.splice(i,1);
+    }
     createPlanets(simParams?: SolarSystemParams) {
         if (!simParams) {
             simParams = SolarSystem.defaultSimParams();

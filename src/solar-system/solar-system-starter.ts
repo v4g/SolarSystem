@@ -250,10 +250,11 @@ export class SolarSystemStarter extends Boilerplate {
         this.selectedPlanetIndex = list.selectedIndex;
         const selected = list.selectedIndex;
         if (this.selectedPlanetIndex >= 0) {
-            this.params.planets.splice(this.selectedPlanetIndex);
+            this.params.planets.splice(this.selectedPlanetIndex, 1);
             const list = document.getElementById('planet-list') as HTMLSelectElement;
             list.options.remove(this.selectedPlanetIndex);
         }
+        this.solarSystem.removePlanet(this.selectedPlanetIndex);
         this.selectedPlanetIndex = -1;
         list.selectedIndex = selected - 1;
         this.selectedPlanetIndex = list.selectedIndex;

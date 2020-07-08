@@ -95,6 +95,9 @@ export class ParticleDerivative {
         for (let j = 0; j < items.length; j++)
             this.derivative[i][j] += items[j];
     }
+    remove(i: number) {
+        this.derivative.splice(i, 1);
+    }
     clear() {
         for (let i = 0; i < this.derivative.length; i++)
             for (let j = 0; j < this.derivative[i].length; j++) {
@@ -151,6 +154,10 @@ export class ParticleSystem {
     addParticle(particle: IParticle) {
         this.particles.push(particle);
         this.derivative.addParticle();
+    }
+    removeParticle(i: number) {
+        this.particles.splice(i, 1);
+        this.derivative.remove(i);
     }
     addForce(force: IForce) {
         this.forces.push(force);

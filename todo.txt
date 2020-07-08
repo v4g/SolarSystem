@@ -15,7 +15,15 @@ X Add velocity selection through mouse right click
 X Add gravitation constant and simulation speed parameters
 X At higher simulation speeds, the simulation becomes unstable and keeps adding an error in every revolution
 X    We need RK-4 because acceleration is also changing with time and therefore needs to be accounted for
+X Fix the remove planet bug - When a planet is removed, it isnt removed immediately from the simulation. If the simulation
+X    is reset at this point
 Add zoom to be able to better see the moons orbit
+Add a hot streak behind planets to show their orbits
+Add some sprinkled stars
+Year selection
+    Add the ability to select a date to go to from the current date
+        Would need to be able to say what date it is from the position of the earths orbit 
+    Add a news ticker that displays some news events from the year that the planet is in
 Update the name to reflect the new name even if the simulation is reset and the planet is clicked in GUI
 What happens if a bunch of planets start at the same point and some sort of
     accumulation code is written that accumulates planets that come too close
