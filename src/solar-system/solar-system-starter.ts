@@ -1,8 +1,8 @@
 import { Boilerplate } from "../boilerplate/boilerplate";
-import { Vector3, Plane } from "three";
+import { Vector3, Plane, Camera, Texture, TextureLoader, RepeatWrapping, CubeTextureLoader, MeshBasicMaterial, Mesh, BoxGeometry, BackSide } from "three";
 import { SolarSystem, SolarSystemParams } from "./solar-system";
 import { PlanetParams } from "./planet"; import { GravityForce } from "../particle-system/particle-system";
-;
+import { TrackballControls } from "three/examples/jsm/controls/TrackballControls";
 
 export class SolarSystemStarter extends Boilerplate {
     solarSystem: SolarSystem;
@@ -19,6 +19,8 @@ export class SolarSystemStarter extends Boilerplate {
     checkbox: HTMLInputElement;
     simSpeedHTML: HTMLInputElement;
     units: ScaledUnits;
+    controls: TrackballControls;
+    background: Texture;
     // Post creation hook 
     postInitHook() {
         this.renderer.domElement.addEventListener('mousedown', this.onMouseDown.bind(this), false);
@@ -45,7 +47,6 @@ export class SolarSystemStarter extends Boilerplate {
         this.inputView = this.getInputView();
         this.velocityVisible = false;
         this.calculateScaledG();
-
         this.params = this.defaultSimParams();
         this.startParams = this.params.clone();
 
@@ -56,50 +57,57 @@ export class SolarSystemStarter extends Boilerplate {
         this.buildPlanetOptions();
         this.resume();
 
+        this.controls = new TrackballControls(this.camera, this.renderer.domElement);
+
+    }
+
+
+    createSkybox() {
+        let skyBoxGeometry = new BoxGeometry(10000, 10000, 10000);
+        let skyBoxMaterials = new Array<MeshBasicMaterial>();
+        let loader = new TextureLoader();
+        loader.setPath('res/');
+        // const texts = ['starsl.jpg', 'starsc.jpg', 'starsr.jpg', 'starsb.jpg', 'starst.jpg', 'starst.jpg']
+        const texts = ['starsr.jpg', 'starsl.jpg', 'starst.jpg', 'starst.jpg', 'starsc.jpg', 'starsb.jpg'];
+        texts.forEach( n=> {
+            let skyBoxMaterial = new MeshBasicMaterial({ color: 0x9999ff, side: BackSide });
+            skyBoxMaterials.push(skyBoxMaterial);
+            this.background = loader.load(n);
+            this.background.wrapS = RepeatWrapping;
+            this.background.wrapT = RepeatWrapping;
+            skyBoxMaterial.map = this.background;
+            skyBoxMaterial.needsUpdate = true;
+            
+        }, this);
+        let skyBox = new Mesh(skyBoxGeometry, skyBoxMaterials);
+        this.scene.add(skyBox);
     }
 
     defaultSimParams(): SolarSystemParams {
         let params = new SolarSystemParams();
         const values = new Array<Array<any>>(); // Values on 7th July
-        values.push(new Array<any>('Sun', 0, 0, 0, 0, 0, 0, '#d6d01e', SolarSystem.SUNS_MASS, 0.5)); //sun
+        values.push(new Array<any>('Sun', 0, 0, 0, 0, 0, 0, '#d6d01e', SolarSystem.SUNS_MASS, 0.7)); //sun
         values.push(new Array<any>('Mercury', 2.969770142937778E+10, -5.834674421582220E+10, -7.492028038583037E+09,
-        3.366903971984620E+04, 2.452271301668723E+04, -1.084683781571878E+03, '#f54f40', 3.302e23, 0.4)); //mars
-            values.push(new Array<any>('Venus', 6.392025365556467E+10, -8.807847170353863E+10, -4.897273894079294E+09,
-            2.811050684887783E+04, 2.044576948803772E+04, -1.341593734249432E+03, '#f54f40', 48.685e23, 0.4)); //mars
+            3.366903971984620E+04, 2.452271301668723E+04, -1.084683781571878E+03, '#fcd703', 3.302e23, 0.3)); //mars
+        values.push(new Array<any>('Venus', 6.392025365556467E+10, -8.807847170353863E+10, -4.897273894079294E+09,
+            2.811050684887783E+04, 2.044576948803772E+04, -1.341593734249432E+03, '#fcba03', 48.685e23, 0.4)); //mars
         values.push(new Array<any>('Earth', 3.954577361582965E+10, -1.468626167963164E+11, 6.990276396304369E+06,
             2.826885958675343E+04, 7.627209736985429E+03, 4.962096518887904E-01, '#57a5c9', SolarSystem.EARTHS_MASS, 0.4)); //earth
-            values.push(new Array<any>('Mars', 1.559338989683880E+11, -1.366673941517965E+11, -6.689125437910400E+09,
-            1.689119984009652E+04, 2.029578319586353E+04, 1.091272190740256E+01, '#f54f40', 6.4171e23, 0.4)); //mars
-            values.push(new Array<any>('Jupiter', 2.820250486756812E+11, -7.183389321689687E+11, -3.326334195901930E+09,
-            1.201775975241539E+04, 5.396479630321678E+03, -2.913036386668424E+02, '#f54f40', 1898.13e24, 0.4)); //mars
-            values.push(new Array<any>('Saturn', 7.016376298753586E+11, -1.323367975983804E+12, -4.918155507721782E+09,
-            8.013002174446694E+03, 4.504475475243400E+03, -3.972410034484997E+02, '#f54f40', 5.6834e26, 0.4)); //mars
-            values.push(new Array<any>('Uranus', 2.361547009430319E+12, 1.786580025186876E+12, -2.395450073663449E+10,
-            -4.147403865575232E+03, 5.118871847171336E+03, 7.279300901810748E+01, '#f54f40', 86.813e24, 0.4)); //mars
-            values.push(new Array<any>('Neptune', 4.392215141217960E+12, -8.654609667080582E+11, -8.341322119960582E+10,
-            1.027226060586543E+03, 5.371496217312306E+03, -1.347116154450971E+02, '#f54f40', 102.413e24, 0.4)); //mars
+        values.push(new Array<any>('Mars', 1.559338989683880E+11, -1.366673941517965E+11, -6.689125437910400E+09,
+            1.689119984009652E+04, 2.029578319586353E+04, 1.091272190740256E+01, '#f54f40', 6.4171e23, 0.3)); //mars
+        values.push(new Array<any>('Jupiter', 2.820250486756812E+11, -7.183389321689687E+11, -3.326334195901930E+09,
+            1.201775975241539E+04, 5.396479630321678E+03, -2.913036386668424E+02, '#b8b18a', 1898.13e24, 0.6)); //mars
+        values.push(new Array<any>('Saturn', 7.016376298753586E+11, -1.323367975983804E+12, -4.918155507721782E+09,
+            8.013002174446694E+03, 4.504475475243400E+03, -3.972410034484997E+02, '#aeb55e', 5.6834e26, 0.6)); //mars
+        values.push(new Array<any>('Uranus', 2.361547009430319E+12, 1.786580025186876E+12, -2.395450073663449E+10,
+            -4.147403865575232E+03, 5.118871847171336E+03, 7.279300901810748E+01, '#5e84b5', 86.813e24, 0.6)); //mars
+        values.push(new Array<any>('Neptune', 4.392215141217960E+12, -8.654609667080582E+11, -8.341322119960582E+10,
+            1.027226060586543E+03, 5.371496217312306E+03, -1.347116154450971E+02, '#9cb7db', 102.413e24, 0.6)); //mars
         values.forEach(v => {
-            const p = new PlanetParams(v[0], new Vector3(v[1], v[2], v[3]), new Vector3(v[4], v[5], v[6]), v[7], v[8]);
+            const p = new PlanetParams(v[0], new Vector3(v[1], v[2], v[3]), new Vector3(v[4], v[5], v[6]), v[7], v[8], v[9]);
             p.convertUnits(this.units);
             params.planets.push(p);
         })
-        // const earth_distance = this.units.getScaledDistance(SolarSystem.EARTH_TO_SUN);
-        // const earth_vel = this.units.getScaledVelocity(SolarSystem.EARTHS_VELOCITY);
-        // const sun_mass = this.units.getScaledMass(SolarSystem.SUNS_MASS);
-        // const earth_mass = this.units.getScaledMass(SolarSystem.EARTHS_MASS);
-        // const moon_dist = earth_distance + this.units.getScaledDistance(SolarSystem.EARTH_TO_MOON);
-        // const moon_vel = this.units.getScaledVelocity(SolarSystem.MOONS_VELOCITY);
-        // const moon_mass = this.units.getScaledMass(SolarSystem.MOONS_MASS);
-        // const mars_dist = this.units.getScaledDistance(SolarSystem.MARS_TO_SUN);
-        // const mars_vel = this.units.getScaledVelocity(SolarSystem.MARS_VELOCITY);
-        // const mars_mass = this.units.getScaledMass(SolarSystem.MARS_MASS);
-        // params.planets.push(new PlanetParams('Sun', new Vector3(0, 0, 0), new Vector3(0, 0, 0), '#d6d01e', sun_mass));
-        // params.planets.push(new PlanetParams('Earth', new Vector3(earth_distance, 0, 0), new Vector3(0, earth_vel, 0),
-        //     '#57a5c9', earth_mass, 0.1));
-        // params.planets.push(new PlanetParams('Moon', new Vector3(moon_dist, 0, 0), new Vector3(0, moon_vel, 0),
-        //     '#b4bfbe', moon_mass, 0.1));
-        // params.planets.push(new PlanetParams('Mars', new Vector3(mars_dist, 0, 0), new Vector3(0, mars_vel, 0),
-        //     '#f54f40', mars_mass, 0.1));
         return params;
     }
 
@@ -112,6 +120,7 @@ export class SolarSystemStarter extends Boilerplate {
         this.gConstant.valueAsNumber = g;
         this.units = units;
     }
+
     // Use this function to place all animation code
     animateHook() {
         if (this.solarSystem != null && !this.pauseSimulation) {
@@ -121,6 +130,7 @@ export class SolarSystemStarter extends Boilerplate {
                 this.inputView.set(this.params.planets[this.selectedPlanetIndex]);
             }
         }
+        this.controls.update();
     }
 
     buildPlanetOptions() {
