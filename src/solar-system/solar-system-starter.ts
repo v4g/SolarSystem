@@ -56,6 +56,7 @@ export class SolarSystemStarter extends Boilerplate {
 
         this.buildPlanetOptions();
         this.resume();
+        this.createSkybox();
 
         this.controls = new TrackballControls(this.camera, this.renderer.domElement);
 
@@ -80,6 +81,8 @@ export class SolarSystemStarter extends Boilerplate {
             
         }, this);
         let skyBox = new Mesh(skyBoxGeometry, skyBoxMaterials);
+        skyBox.rotateOnAxis(new Vector3(1, 0, 0), Math.PI/2);
+        console.log(skyBox);
         this.scene.add(skyBox);
     }
 
