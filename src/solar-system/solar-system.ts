@@ -1,4 +1,4 @@
-import { Group, Vector3, Geometry, ArrowHelper } from "three";
+import { Group, Vector3, Geometry, ArrowHelper, PointLight } from "three";
 import { Planet, PlanetParams } from "./planet";
 import { PlanetOrbit } from "./planet-orbit";
 import { ParticleSystem, GravityForce } from "../particle-system/particle-system";
@@ -31,6 +31,7 @@ export class SolarSystem {
     velocityArrows: Group;
     velocityGeometry: ArrowHelper;
     gravity: GravityForce;
+    light: PointLight;
     static readonly YEAR_IN_SECONDS = 3.154e7;
     static readonly SUNS_MASS = 1.989e30;
     // Earth
@@ -56,6 +57,7 @@ export class SolarSystem {
         this.velocityGeometry.scale.set(2, 1, 1);
         this.createPlanets(simParams);
         this.velocitiesVisible(false);
+        this.planets[0].addLightSource('0xff0000');
     }
     static defaultSimParams() {
         let params = new SolarSystemParams();

@@ -57,7 +57,7 @@ export class Boilerplate {
         this.animateHook();
         requestAnimationFrame(this.animate.bind(this));
         this.render();
-
+        this.t += 1;
     }
 
     // Use this function to place all animation code

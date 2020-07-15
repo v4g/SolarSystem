@@ -1,6 +1,7 @@
-import { SphereBufferGeometry, MeshBasicMaterial, Mesh, Vector3, ArrowHelper } from "three";
+import { SphereBufferGeometry, MeshBasicMaterial, Mesh, Vector3, ArrowHelper, Material, TextGeometry, PointLight, Scene, MeshStandardMaterial, Color } from "three";
 import { IParticle, ParticleDerivative, Particle } from "../particle-system/particle-system";
 import { ScaledUnits } from "./solar-system-starter";
+import { PointSet } from "../boilerplate/point-set";
 
 export class PlanetParams {
     name: string;
@@ -14,7 +15,7 @@ export class PlanetParams {
         if (velocity) this.velocity = velocity; else this.velocity = new Vector3();
         if (name) this.name = name; else this.name = "Planet";
         if (mass) this.mass = mass; else this.mass = 1;
-        if (color) this.color = color; else this.color = "#ffff00";        
+        if (color) this.color = color; else this.color = "#ffff00";
         this.radius = radius;
     }
 
@@ -33,11 +34,11 @@ export class PlanetParams {
     }
 }
 
-export class Planet implements IParticle{
+export class Planet implements IParticle {
 
     name: string;
     geometry: SphereBufferGeometry;
-    material: MeshBasicMaterial;
+    material: MeshStandardMaterial;
     mesh: Mesh;
     particle: Particle;
     color: string;
@@ -46,22 +47,22 @@ export class Planet implements IParticle{
         this.name = name;
         this.geometry = new SphereBufferGeometry(radius);
         //color to be replaced with texture
-        this.material = new MeshBasicMaterial( {color} );  
+        this.material = new MeshStandardMaterial({ color });
         this.mesh = new Mesh(this.geometry, this.material);
-        this.particle = new Particle(mass); 
-        this.color = color;         
+        this.particle = new Particle(mass, radius);
+        this.color = color;
     }
     position(v?: Vector3) {
         if (v !== undefined)
             this.mesh.position.copy(v);
         return this.mesh.position.clone();
     }
-    setMass(m: number){ this.particle.setMass(m) } ;
-    getMass(): number { return this.particle.getMass() } ;
+    setMass(m: number) { this.particle.setMass(m) };
+    getMass(): number { return this.particle.getMass() };
     getVelocity(): Vector3 { return this.particle.getVelocity(); };
-    getPosition(): Vector3 { return this.position()};
+    getPosition(): Vector3 { return this.position() };
     setPosition(x: number, y: number, z: number): Vector3 {
-        const pos = this.position(new Vector3(x,y,z));
+        const pos = this.position(new Vector3(x, y, z));
         return pos;
     };
     setVelocity(x: number, y: number, z: number): Vector3 {
@@ -69,13 +70,16 @@ export class Planet implements IParticle{
         this.updateArrowDirection();
         return vel;
     }
-    getParams():PlanetParams {
+    getParams(): PlanetParams {
         return new PlanetParams(this.name, this.getPosition(), this.getVelocity(), this.color, this.getMass());
     }
     createFromJson(json: string) {
         const obj = (JSON.parse(json)) as any;
         this.name = obj.name;
         this.setPosition(obj.x_pos, obj.y_pos, obj.z_pos);
+    }
+    getRadius(): number {
+        return this.particle.getRadius();
     }
     destroy() {
         this.geometry.dispose();
@@ -100,5 +104,23 @@ export class Planet implements IParticle{
 
     velocityVisible(b: boolean) {
         this._velocityMesh.visible = b;
+    }
+
+    label(font: any, material: Material) {
+        var geometry = new TextGeometry(this.name, {
+            font: font,
+            size: 20,
+            height: 5,
+            curveSegments: 12,
+        });
+        const mesh = new Mesh(geometry, material);
+        mesh.scale.set(0.01, 0.01, 0.01);
+        this.mesh.add(mesh);
+    }
+
+    addLightSource(color: string) {
+        this.material.emissive = new Color(this.color);
+        let light = new PointLight(color);
+        this.mesh.add(light);
     }
 };

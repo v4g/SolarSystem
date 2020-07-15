@@ -1,10 +1,12 @@
 import { Boilerplate } from "../boilerplate/boilerplate";
-import { Vector3, Plane, Camera, Texture, TextureLoader, RepeatWrapping, CubeTextureLoader, MeshBasicMaterial, Mesh, BoxGeometry, BackSide } from "three";
+import { Vector3, Plane, Camera, Texture, TextureLoader, RepeatWrapping, CubeTextureLoader, MeshBasicMaterial, Mesh, BoxGeometry, BackSide, WebGLCapabilities, LinearFilter, NearestFilter, Vector4, FontLoader, MeshStandardMaterial, Matrix4 } from "three";
 import { SolarSystem, SolarSystemParams } from "./solar-system";
 import { PlanetParams } from "./planet"; import { GravityForce } from "../particle-system/particle-system";
 import { TrackballControls } from "three/examples/jsm/controls/TrackballControls";
+import { OrbitTrail, OrbitTrailManager } from "./orbit-trail";
 
 export class SolarSystemStarter extends Boilerplate {
+    readonly THRESHOLD = 24 * 3600000;
     solarSystem: SolarSystem;
     params: SolarSystemParams;
     selectedPlanetIndex = -1;
@@ -13,39 +15,61 @@ export class SolarSystemStarter extends Boilerplate {
     mousemoveListener: any;
     startParams: SolarSystemParams;
     velocityVisible: boolean;
+    trailVisible: boolean;
     simulationSpeed: number;
     gConstant: HTMLInputElement
     pauseSimButton: HTMLInputElement;
     checkbox: HTMLInputElement;
+    trailCheckbox: HTMLInputElement;
     simSpeedHTML: HTMLInputElement;
+    targetDateHTML: HTMLInputElement;
+    currentDateHTML: HTMLInputElement;
     units: ScaledUnits;
     controls: TrackballControls;
     background: Texture;
+    orbits: OrbitTrailManager;
+    cyclesInOneYear: number;
+    elapsedCycles = 0; // time elapsed in scaled units since the sim started
+    dateAtStart: number;
+    targetTime: number;
+    labelsHTML: HTMLElement[];
     // Post creation hook 
     postInitHook() {
         this.renderer.domElement.addEventListener('mousedown', this.onMouseDown.bind(this), false);
         this.renderer.domElement.addEventListener('mouseup', this.onMouseUp.bind(this), false);
         this.mousemoveListener = this.mouseDragPoint.bind(this);
         this.t = 0;
+        this.elapsedCycles = 0;
         this.simulationSpeed = 0.01;
-
+        this.cyclesInOneYear = 20;
         this.pauseSimButton = document.getElementById("pause-sim") as HTMLInputElement;
         this.pauseSimButton.addEventListener("click", this.pauseResume.bind(this));
+        this.dateAtStart = new Date(2020, 7, 7).getTime();
 
         document.getElementById("reset-sim").addEventListener("click", this.simulate.bind(this));
         document.getElementById("add-planet").addEventListener("click", this.addNewPlanet.bind(this));
         document.getElementById("remove-planet").addEventListener("click", this.removePlanet.bind(this));
         document.getElementById("lock-value").addEventListener("click", this.lockValues.bind(this));
         document.getElementById("planet-list").addEventListener("change", this.selectPlanet.bind(this));
+        document.getElementById("goto-date").addEventListener("click", this.gotoDate.bind(this));
+
         this.simSpeedHTML = document.getElementById("sim-speed") as HTMLInputElement;
+        this.targetDateHTML = document.getElementById("target-date") as HTMLInputElement;
+        this.currentDateHTML = document.getElementById("current-date") as HTMLInputElement;
+        this.gConstant = document.getElementById("g-constant") as HTMLInputElement;
+        this.checkbox = document.getElementById("velocity-visible") as HTMLInputElement;
+        this.trailCheckbox = document.getElementById("trail-visible") as HTMLInputElement;
+        
         this.simSpeedHTML.addEventListener("change", this.updateSimSpeed.bind(this));
         this.simSpeedHTML.valueAsNumber = this.simulationSpeed;
-        this.gConstant = document.getElementById("g-constant") as HTMLInputElement;
         this.gConstant.addEventListener("change", this.updateGConstant.bind(this));
-        this.checkbox = document.getElementById("velocity-visible") as HTMLInputElement;
         this.checkbox.addEventListener("change", this.setVelocityVisibility.bind(this));
+        this.trailCheckbox.addEventListener("change", this.setTrailVisibility.bind(this));
+
         this.inputView = this.getInputView();
+
         this.velocityVisible = false;
+        this.trailVisible = false;
         this.calculateScaledG();
         this.params = this.defaultSimParams();
         this.startParams = this.params.clone();
@@ -59,7 +83,10 @@ export class SolarSystemStarter extends Boilerplate {
         this.createSkybox();
 
         this.controls = new TrackballControls(this.camera, this.renderer.domElement);
+        this.orbits = new OrbitTrailManager(this.solarSystem.planets, this.scene);
+        this.orbits.visible(this.trailVisible);
 
+        this.createLabels();
     }
 
 
@@ -68,20 +95,22 @@ export class SolarSystemStarter extends Boilerplate {
         let skyBoxMaterials = new Array<MeshBasicMaterial>();
         let loader = new TextureLoader();
         loader.setPath('res/');
-        // const texts = ['starsl.jpg', 'starsc.jpg', 'starsr.jpg', 'starsb.jpg', 'starst.jpg', 'starst.jpg']
         const texts = ['starsr.jpg', 'starsl.jpg', 'starst.jpg', 'starst.jpg', 'starsc.jpg', 'starsb.jpg'];
-        texts.forEach( n=> {
+        texts.forEach(n => {
             let skyBoxMaterial = new MeshBasicMaterial({ color: 0x9999ff, side: BackSide });
             skyBoxMaterials.push(skyBoxMaterial);
             this.background = loader.load(n);
+            this.background.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
             this.background.wrapS = RepeatWrapping;
             this.background.wrapT = RepeatWrapping;
+            this.background.magFilter = NearestFilter;
             skyBoxMaterial.map = this.background;
+            skyBoxMaterial.map.minFilter = NearestFilter;
             skyBoxMaterial.needsUpdate = true;
-            
+
         }, this);
         let skyBox = new Mesh(skyBoxGeometry, skyBoxMaterials);
-        skyBox.rotateOnAxis(new Vector3(1, 0, 0), Math.PI/2);
+        skyBox.rotateOnAxis(new Vector3(1, 0, 0), Math.PI / 2);
         console.log(skyBox);
         this.scene.add(skyBox);
     }
@@ -118,7 +147,7 @@ export class SolarSystemStarter extends Boilerplate {
         const units = new ScaledUnits();
         units.setKgsScale(SolarSystem.EARTHS_MASS);
         units.setMetresScale(SolarSystem.EARTH_TO_SUN, 10);
-        units.setTimeScale(SolarSystem.YEAR_IN_SECONDS, 20 * 10);
+        units.setTimeScale(SolarSystem.YEAR_IN_SECONDS, this.cyclesInOneYear);
         const g = GravityForce.calculate(units.kgs, units.metres, units.seconds);
         this.gConstant.valueAsNumber = g;
         this.units = units;
@@ -132,10 +161,56 @@ export class SolarSystemStarter extends Boilerplate {
             if (this.selectedPlanetIndex >= 0) {
                 this.inputView.set(this.params.planets[this.selectedPlanetIndex]);
             }
+            if (this.trailVisible == true) this.orbits.update(this.simulationSpeed);
+            this.elapsedCycles += this.simulationSpeed;
+            let currentTime = this.calculatePresentDate();
+            if (this.targetTime > 0) {
+                if (Math.abs(this.targetTime - currentTime) < this.THRESHOLD) {
+                    console.log("Reached");
+                }
+            }
+            this.updateLabels();
         }
         this.controls.update();
     }
 
+    toScreenXY( pos:Vector3) {
+        let projScreenMat = new Matrix4();
+        projScreenMat.multiplyMatrices( this.camera.projectionMatrix, this.camera.matrixWorldInverse );
+        pos.applyMatrix4(projScreenMat);
+        let viewport = new Vector4();
+        this.renderer.getViewport(viewport);
+        return { x: ( pos.x + 1 ) * viewport.z / 2 + viewport.x,
+             y: ( - pos.y + 1) * viewport.w / 2 + viewport.y };
+    
+    }
+    updateLabels() {
+        if (this.labelsHTML) {
+            this.labelsHTML.forEach((l,i)=> {
+                let obj  = this.toScreenXY(this.solarSystem.planets[i].getPosition());
+                l.style.top = obj.y+"px";
+                l.style.left = obj.x+"px";            
+            });
+        }
+    }
+    createLabels() {
+        this.labelsHTML = [];
+        this.solarSystem.planets.forEach((p, i)=> {
+            const ele = document.createElement("div");
+            ele.id = "planet-label"+i;
+            ele.className = "planet-label";
+            ele.textContent = p.name;
+            document.body.appendChild(ele);
+            this.labelsHTML.push(ele);
+        },this);
+    }
+
+    calculatePresentDate(): number {
+        let elapsedInMillis = 1000 * this.units.getUnscaledTime(this.elapsedCycles);
+        let currentTime = this.dateAtStart + elapsedInMillis;
+        this.currentDateHTML.value = new Date(currentTime).toDateString();
+        return currentTime;
+    }
     buildPlanetOptions() {
         const list = document.getElementById("planet-list") as HTMLSelectElement;
         for (let i = list.options.length; i >= 0; i--) {
@@ -189,12 +264,17 @@ export class SolarSystemStarter extends Boilerplate {
         }
         this.selectPlanet();
         this.solarSystem = new SolarSystem(this.startParams);
+        this.elapsedCycles = 0;
         this.params = this.startParams.clone();
         this.solarSystem.velocitiesVisible(this.velocityVisible);
         this.buildPlanetOptions();
         this.calculateScaledG();
 
         this.updateGConstant();
+        this.orbits.destroy(this.scene);
+        this.orbits = new OrbitTrailManager(this.solarSystem.planets, this.scene);
+        this.orbits.visible(this.trailVisible);
+
         if (this.selectedPlanetIndex >= this.params.planets.length)
             this.selectedPlanetIndex = -1;
         this.scene.add(this.solarSystem.group);
@@ -394,6 +474,10 @@ export class SolarSystemStarter extends Boilerplate {
             this.velocitiesVisible(false);
         }
     }
+    setTrailVisibility(e: InputEvent) {
+        this.trailVisible = this.trailCheckbox.checked;
+        this.orbits.visible(this.trailVisible);
+    }
 
     updateGConstant() {
         this.solarSystem.gravity.G = this.gConstant.valueAsNumber;
@@ -401,6 +485,16 @@ export class SolarSystemStarter extends Boilerplate {
 
     updateSimSpeed() {
         this.simulationSpeed = this.simSpeedHTML.valueAsNumber;
+    }
+
+    gotoDate() {
+        const d = this.targetDateHTML.valueAsDate;
+        if (d == null) {
+            // Display error message no date selected
+        } else {
+            this.targetTime = d.getTime();
+            // Set simulation speed forward or backward
+        }
     }
 }
 
@@ -512,6 +606,14 @@ export class ScaledUnits {
      */
     getScaledTime(val: number): number {
         return val / this._seconds;
+    }
+
+    /**
+     * Returns value of the time in seconds
+     * @param val The time in new units you want in seconds
+     */
+    getUnscaledTime(val: number): number {
+        return val * this._seconds;
     }
 
     /**

@@ -17,9 +17,14 @@ X At higher simulation speeds, the simulation becomes unstable and keeps adding 
 X    We need RK-4 because acceleration is also changing with time and therefore needs to be accounted for
 X Fix the remove planet bug - When a planet is removed, it isnt removed immediately from the simulation. If the simulation
 X    is reset at this point
-Add zoom to be able to better see the moons orbit
-Add a hot streak behind planets to show their orbits
-Add some sprinkled stars
+X Add zoom to be able to better see the moons orbit
+X Add a hot streak behind planets to show their orbits
+X Add some sprinkled stars
+Create labels on planets
+    Perma labels that display the names or
+    Labels that only show up when a planet is hovered (touch devices?)
+Zoom to the planets when one is clicked, following it, facing the sun
+Add elliptical orbits even if the planets dont follow them
 Year selection
     Add the ability to select a date to go to from the current date
         Would need to be able to say what date it is from the position of the earths orbit 

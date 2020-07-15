@@ -11,6 +11,7 @@ module.exports = {
       patterns: [
         { from: './src/css', to: './css' },
         { from: './res/', to: './res' },
+        { from: './fonts/', to: './fonts' },
       ],
     }),
     new HtmlWebpackPlugin({

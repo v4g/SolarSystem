@@ -1,7 +1,16 @@
   input {
       border-radius: 10px;
   }
-
+  body {
+      overflow: hidden;
+  }
+  .planet-label {
+    position: absolute;
+    z-index: 100;
+    font-style: normal;
+    color: yellowgreen;
+    overflow: hidden;
+}
   .number-input {
       width: 5em;
       padding-left: 0.2em;

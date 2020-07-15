@@ -7,16 +7,19 @@ export interface IParticle {
     getPosition(): Vector3;
     setPosition(x: number, y: number, z: number): Vector3;
     setVelocity(x: number, y: number, z: number): Vector3;
+    getRadius(): number;
 }
 export class Particle implements IParticle {
     private velocity: Vector3;
     private position: Vector3;
     private mass: number;
-    constructor(mass?: number) {
+    private radius: number;
+    constructor(mass?: number, radius=1) {
         this.velocity = new Vector3();
         this.position = new Vector3();
         if (mass) this.mass = mass;
         else this.mass = 1;
+        this.radius = radius;
     }
     getMass(): number {
         return this.mass;
@@ -32,6 +35,9 @@ export class Particle implements IParticle {
     setVelocity(x: number, y: number, z: number): Vector3 {
         return this.velocity.set(x, y, z);
     };
+    getRadius() {
+        return this.radius;
+    }
 
 }
 export interface IForce {
