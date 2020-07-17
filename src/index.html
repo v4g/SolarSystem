@@ -18,7 +18,7 @@
 
 <body>
 	<div class='flex-row HUD'>
-		<div class="flex-row">
+		<div id="menu1" class="flex-row">
 			<div class="flex-col">
 				<div style="border-radius: 10px; overflow: hidden;">
 					<select name="planet-list" style="border-radius: 10px; overflow:auto; width: 100%;" id="planet-list"
@@ -31,7 +31,7 @@
 				</div>
 			</div>
 		</div>
-		<div class="container">
+		<div id="menu2" class="container">
 			<div class="flex-col">
 				<div class="flex-row">
 					<label for="pos_x" class="std-label">Position</label>
@@ -55,7 +55,7 @@
 				</div>
 			</div>
 		</div>
-		<div class="container">
+		<div id="menu3" class="container">
 			<div class="flex-col">
 				<div class="flex-row">
 					<label for="velocity-visible" class="std-label">Show Velocity</label>
@@ -78,24 +78,30 @@
 		<div class="container">
 			<div class="flex-col">
 				<div class="flex-row">
-					<label for="target-date" class="std-label">Select the Date to go to</label>
-					<input type="date" id="target-date">
-				</div>
-				<div class="flex-row">
-					<button id="goto-date">Time Travel!</button>
-				</div>
-				<div class="flex-row">
 					<label for="current-date" class="std-label">Present Date</label>
-					<input type="text" id="current-date" disabled="true">
+					<input type="text" class="date-output" id="current-date" disabled="true">
+				</div>
+				<div class="flex-row">
+					<label for="target-date" class="std-label">Select the Date to go to</label>
+					<input type="date" class="date-input" id="target-date">
+				</div>
+				<div class="flex-row">
+					<span></span>
+					<button id="goto-date">Time Travel!</button>
 				</div>
 				
 			</div>
 		</div>
-		<div class="flex-row">
+		<div id="menu4" class="flex-row">
 			<div class="flex-col">
 				<button id="reset-sim">Reset</button>
 				<button id="lock-value">Lock</button>
 				<button id="pause-sim">Pause</button>
+			</div>
+		</div>
+		<div id="menu5" class="flex-row">
+			<div class="flex-col">
+				<div class="news-ticker" id="news-ticker"> </div>
 			</div>
 		</div>
 	</div>

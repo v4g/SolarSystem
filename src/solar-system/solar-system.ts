@@ -1,4 +1,4 @@
-import { Group, Vector3, Geometry, ArrowHelper, PointLight } from "three";
+import { Group, Vector3, Geometry, ArrowHelper, PointLight, NearestFilter } from "three";
 import { Planet, PlanetParams } from "./planet";
 import { PlanetOrbit } from "./planet-orbit";
 import { ParticleSystem, GravityForce } from "../particle-system/particle-system";
@@ -92,6 +92,9 @@ export class SolarSystem {
         }, this);
     }
     update(time_step: number) {
+        const N_ITERATIONS = 100;
+        time_step = time_step/N_ITERATIONS;
+        for (let i = 0; i < N_ITERATIONS; i++)
         this.particleSystem.updateRK4(time_step);
     }
 

@@ -1,12 +1,15 @@
 import { Boilerplate } from "../boilerplate/boilerplate";
-import { Vector3, Plane, Camera, Texture, TextureLoader, RepeatWrapping, CubeTextureLoader, MeshBasicMaterial, Mesh, BoxGeometry, BackSide, WebGLCapabilities, LinearFilter, NearestFilter, Vector4, FontLoader, MeshStandardMaterial, Matrix4 } from "three";
+import { Vector3, Plane, Camera, Texture, TextureLoader, RepeatWrapping, CubeTextureLoader, MeshBasicMaterial, Mesh, BoxGeometry, BackSide, WebGLCapabilities, LinearFilter, NearestFilter, Vector4, FontLoader, MeshStandardMaterial, Matrix4, AudioListener, Audio, AudioLoader } from "three";
 import { SolarSystem, SolarSystemParams } from "./solar-system";
 import { PlanetParams } from "./planet"; import { GravityForce } from "../particle-system/particle-system";
 import { TrackballControls } from "three/examples/jsm/controls/TrackballControls";
 import { OrbitTrail, OrbitTrailManager } from "./orbit-trail";
+import { Events, EventUpdater } from "./events";
+const NewsAPI = require('newsapi');
+const newsapi = new NewsAPI('cc5028bc85904e9c9faa0e8eccb15045');
 
 export class SolarSystemStarter extends Boilerplate {
-    readonly THRESHOLD = 24 * 3600000;
+    readonly THRESHOLD = 24 * 3600;
     solarSystem: SolarSystem;
     params: SolarSystemParams;
     selectedPlanetIndex = -1;
@@ -24,6 +27,7 @@ export class SolarSystemStarter extends Boilerplate {
     simSpeedHTML: HTMLInputElement;
     targetDateHTML: HTMLInputElement;
     currentDateHTML: HTMLInputElement;
+    newsTickerHTML: HTMLInputElement;
     units: ScaledUnits;
     controls: TrackballControls;
     background: Texture;
@@ -33,10 +37,12 @@ export class SolarSystemStarter extends Boilerplate {
     dateAtStart: number;
     targetTime: number;
     labelsHTML: HTMLElement[];
+    speedVarier: SimSpeedVarier;
+    events: EventUpdater;
     // Post creation hook 
     postInitHook() {
-        this.renderer.domElement.addEventListener('mousedown', this.onMouseDown.bind(this), false);
-        this.renderer.domElement.addEventListener('mouseup', this.onMouseUp.bind(this), false);
+        // this.renderer.domElement.addEventListener('mousedown', this.onMouseDown.bind(this), false);
+        // this.renderer.domElement.addEventListener('mouseup', this.onMouseUp.bind(this), false);
         this.mousemoveListener = this.mouseDragPoint.bind(this);
         this.t = 0;
         this.elapsedCycles = 0;
@@ -59,7 +65,8 @@ export class SolarSystemStarter extends Boilerplate {
         this.gConstant = document.getElementById("g-constant") as HTMLInputElement;
         this.checkbox = document.getElementById("velocity-visible") as HTMLInputElement;
         this.trailCheckbox = document.getElementById("trail-visible") as HTMLInputElement;
-        
+        this.newsTickerHTML = document.getElementById("news-ticker") as HTMLInputElement;
+
         this.simSpeedHTML.addEventListener("change", this.updateSimSpeed.bind(this));
         this.simSpeedHTML.valueAsNumber = this.simulationSpeed;
         this.gConstant.addEventListener("change", this.updateGConstant.bind(this));
@@ -87,8 +94,45 @@ export class SolarSystemStarter extends Boilerplate {
         this.orbits.visible(this.trailVisible);
 
         this.createLabels();
+        this.speedVarier = new SimSpeedVarier(0.1, 0.001, 3600 * 24 * 365);
+        this.setViewMode();
+        this.events = new EventUpdater();
+        this.music();
     }
 
+    music() {
+        // create an AudioListener and add it to the camera
+        let listener = new AudioListener();
+        this.camera.add(listener);
+
+        // create a global audio source
+        var sound = new Audio(listener);
+
+        // load a sound and set it as the Audio object's buffer
+        var audioLoader = new AudioLoader();
+        audioLoader.load('res/music.ogg', function (buffer) {
+            sound.setBuffer(buffer);
+            sound.setLoop(true);
+            sound.setVolume(0.5);
+            sound.play();
+        });
+    }
+
+    updateNews(d: Date) {
+        this.newsTickerHTML.textContent = this.events.update(d);
+    }
+    setViewMode() {
+        document.getElementById("menu1").style.display = "none";
+        document.getElementById("menu2").style.display = "none";
+        document.getElementById("menu3").style.display = "none";
+        document.getElementById("menu4").style.display = "none";
+        // this.simSpeedHTML.style.display = "none";
+        // this.gConstant.style.display = "none";
+        // this.checkbox.style.display = "none";
+        // this.trailCheckbox.style.display = "none";
+        // this.inputView.hide();
+        // document.getElementById("planet-list").style.display = "none";            
+    }
 
     createSkybox() {
         let skyBoxGeometry = new BoxGeometry(10000, 10000, 10000);
@@ -111,7 +155,6 @@ export class SolarSystemStarter extends Boilerplate {
         }, this);
         let skyBox = new Mesh(skyBoxGeometry, skyBoxMaterials);
         skyBox.rotateOnAxis(new Vector3(1, 0, 0), Math.PI / 2);
-        console.log(skyBox);
         this.scene.add(skyBox);
     }
 
@@ -135,6 +178,23 @@ export class SolarSystemStarter extends Boilerplate {
             -4.147403865575232E+03, 5.118871847171336E+03, 7.279300901810748E+01, '#5e84b5', 86.813e24, 0.6)); //mars
         values.push(new Array<any>('Neptune', 4.392215141217960E+12, -8.654609667080582E+11, -8.341322119960582E+10,
             1.027226060586543E+03, 5.371496217312306E+03, -1.347116154450971E+02, '#9cb7db', 102.413e24, 0.6)); //mars
+        // DEC 4 1991
+        // values.push(new Array<any>('Mercury', 3.215586514076374E+10, 3.502320983159295E+10, -1.002055050515439E+08,
+        //     3.366903971984620E+04, 2.452271301668723E+04, -1.084683781571878E+03, '#fcd703', 3.302e23, 0.3)); //mars
+        // values.push(new Array<any>('Venus', -7.542591837835687E+10, 7.638275429026571E+10, 5.398960282087028E+09,
+        //     2.811050684887783E+04, 2.044576948803772E+04, -1.341593734249432E+03, '#fcba03', 48.685e23, 0.4)); //mars
+        // values.push(new Array<any>('Earth', 4.727574231452822E+10, 1.401219502560267E+11, -8.781901660040021E+06,
+        //     2.826885958675343E+04, 7.627209736985429E+03, 4.962096518887904E-01, '#57a5c9', SolarSystem.EARTHS_MASS, 0.4)); //earth
+        // values.push(new Array<any>('Mars', -1.189250804796563E+11, -1.948415064818083E+11, -1.167391950507954E+09,
+        //     1.689119984009652E+04, 2.029578319586353E+04, 1.091272190740256E+01, '#f54f40', 6.4171e23, 0.3)); //mars
+        // values.push(new Array<any>('Jupiter', -7.173393581711400E+11, 3.650711247876566E+11, 1.455140822182910E+10,
+        //     1.201775975241539E+04, 5.396479630321678E+03, -2.913036386668424E+02, '#b8b18a', 1898.13e24, 0.6)); //mars
+        // values.push(new Array<any>('Saturn', 7.016376298753586E+11, -1.323367975983804E+12, -4.918155507721782E+09,
+        //     8.013002174446694E+03, 4.504475475243400E+03, -3.972410034484997E+02, '#aeb55e', 5.6834e26, 0.6)); //mars
+        // values.push(new Array<any>('Uranus', 2.361547009430319E+12, 1.786580025186876E+12, -2.395450073663449E+10,
+        //     -4.147403865575232E+03, 5.118871847171336E+03, 7.279300901810748E+01, '#5e84b5', 86.813e24, 0.6)); //mars
+        // values.push(new Array<any>('Neptune', 4.392215141217960E+12, -8.654609667080582E+11, -8.341322119960582E+10,
+        //     1.027226060586543E+03, 5.371496217312306E+03, -1.347116154450971E+02, '#9cb7db', 102.413e24, 0.6)); //mars
         values.forEach(v => {
             const p = new PlanetParams(v[0], new Vector3(v[1], v[2], v[3]), new Vector3(v[4], v[5], v[6]), v[7], v[8], v[9]);
             p.convertUnits(this.units);
@@ -165,51 +225,53 @@ export class SolarSystemStarter extends Boilerplate {
             this.elapsedCycles += this.simulationSpeed;
             let currentTime = this.calculatePresentDate();
             if (this.targetTime > 0) {
-                if (Math.abs(this.targetTime - currentTime) < this.THRESHOLD) {
-                    console.log("Reached");
-                }
+                this.simulationSpeed = this.speedVarier.calculateSpeed(this.targetTime, currentTime, this.simulationSpeed);
+
             }
             this.updateLabels();
+            this.updateNews(new Date(currentTime * 1000));
         }
         this.controls.update();
     }
 
-    toScreenXY( pos:Vector3) {
+    toScreenXY(pos: Vector3) {
         let projScreenMat = new Matrix4();
-        projScreenMat.multiplyMatrices( this.camera.projectionMatrix, this.camera.matrixWorldInverse );
+        projScreenMat.multiplyMatrices(this.camera.projectionMatrix, this.camera.matrixWorldInverse);
         pos.applyMatrix4(projScreenMat);
         let viewport = new Vector4();
         this.renderer.getViewport(viewport);
-        return { x: ( pos.x + 1 ) * viewport.z / 2 + viewport.x,
-             y: ( - pos.y + 1) * viewport.w / 2 + viewport.y };
-    
+        return {
+            x: (pos.x + 1) * viewport.z / 2 + viewport.x,
+            y: (- pos.y + 1) * viewport.w / 2 + viewport.y
+        };
+
     }
     updateLabels() {
         if (this.labelsHTML) {
-            this.labelsHTML.forEach((l,i)=> {
-                let obj  = this.toScreenXY(this.solarSystem.planets[i].getPosition());
-                l.style.top = obj.y+"px";
-                l.style.left = obj.x+"px";            
+            this.labelsHTML.forEach((l, i) => {
+                let obj = this.toScreenXY(this.solarSystem.planets[i].getPosition());
+                l.style.top = obj.y + "px";
+                l.style.left = obj.x + "px";
             });
         }
     }
     createLabels() {
         this.labelsHTML = [];
-        this.solarSystem.planets.forEach((p, i)=> {
+        this.solarSystem.planets.forEach((p, i) => {
             const ele = document.createElement("div");
-            ele.id = "planet-label"+i;
+            ele.id = "planet-label" + i;
             ele.className = "planet-label";
             ele.textContent = p.name;
             document.body.appendChild(ele);
             this.labelsHTML.push(ele);
-        },this);
+        }, this);
     }
 
     calculatePresentDate(): number {
         let elapsedInMillis = 1000 * this.units.getUnscaledTime(this.elapsedCycles);
         let currentTime = this.dateAtStart + elapsedInMillis;
         this.currentDateHTML.value = new Date(currentTime).toDateString();
-        return currentTime;
+        return currentTime / 1000;
     }
     buildPlanetOptions() {
         const list = document.getElementById("planet-list") as HTMLSelectElement;
@@ -492,7 +554,7 @@ export class SolarSystemStarter extends Boilerplate {
         if (d == null) {
             // Display error message no date selected
         } else {
-            this.targetTime = d.getTime();
+            this.targetTime = d.getTime() / 1000;
             // Set simulation speed forward or backward
         }
     }
@@ -542,6 +604,17 @@ export class ParamsInputView {
         this.z_vel.disabled = true;
         this.mass.disabled = true;
         this.name.disabled = true;
+    }
+
+    hide() {
+        this.x_pos.style.display = "none";
+        this.y_pos.style.display = "none";
+        this.z_pos.style.display = "none";
+        this.x_vel.style.display = "none";
+        this.y_vel.style.display = "none";
+        this.z_vel.style.display = "none";
+        this.mass.style.display = "none";
+        this.name.style.display = "none";
     }
 }
 
@@ -622,5 +695,32 @@ export class ScaledUnits {
      */
     getScaledVelocity(val: number): number {
         return val * this.seconds / this.metres;
+    }
+}
+
+export class SimSpeedVarier {
+    LIMIT: number;
+    STEP_SIZE: number
+    SLOW_DOWN_PERIOD: number;
+    MIN_SPEED = 0.01;
+    constructor(limit: number, step_size: number, slow_down_period: number) {
+        this.LIMIT = limit;
+        this.STEP_SIZE = step_size;
+        this.SLOW_DOWN_PERIOD = slow_down_period;
+    }
+    /**
+     * @param to The time in seconds to go to 
+     * @param time The time in seconds right now
+     * @param speed The simulation speed right now
+     */
+    calculateSpeed(to: number, current: number, speed: number): number {
+        let direction = (to - current) / Math.abs(to - current);
+        let accelerate = 1;
+        if (Math.abs(to - current) < this.SLOW_DOWN_PERIOD) {
+            accelerate = -1;
+        }
+        let final_speed = Math.max(Math.min(Math.abs(speed) + (accelerate * this.STEP_SIZE), this.LIMIT), this.MIN_SPEED);
+        final_speed = final_speed * direction;
+        return final_speed;
     }
 }
