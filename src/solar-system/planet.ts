@@ -2,6 +2,7 @@ import { SphereBufferGeometry, MeshBasicMaterial, Mesh, Vector3, ArrowHelper, Ma
 import { IParticle, ParticleDerivative, Particle } from "../particle-system/particle-system";
 import { ScaledUnits } from "./solar-system-starter";
 import { PointSet } from "../boilerplate/point-set";
+import { PlanetOrbit } from "./planet-orbit";
 
 export class PlanetParams {
     name: string;
@@ -42,6 +43,7 @@ export class Planet implements IParticle {
     mesh: Mesh;
     particle: Particle;
     color: string;
+    orbit: PlanetOrbit;
     private _velocityMesh: ArrowHelper;
     constructor(name: string, radius: number, color: string, mass?: number) {
         this.name = name;
@@ -123,4 +125,12 @@ export class Planet implements IParticle {
         let light = new PointLight(color);
         this.mesh.add(light);
     }
+
+    setOrbit(orbit: PlanetOrbit) {
+        this.orbit = orbit;
+        const pos = this.getPosition().sub(orbit.sun);
+        this.orbit.theta = Math.atan2(pos.y, pos.x);
+    }
+
+    getOrbit(): PlanetOrbit { return this.orbit; }
 };

@@ -26,7 +26,7 @@ export class Boilerplate {
         container.appendChild(this.renderer.domElement);
 
         this.camera = new PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 20000);
-        this.camera.position.set(0, 0, 100);
+        this.camera.position.set(0, 0, 200);
         this.camera.lookAt(0, 0, 0);
 
         this.scene = new Scene();

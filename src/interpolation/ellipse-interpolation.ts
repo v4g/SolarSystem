@@ -24,9 +24,9 @@ export class EllipseInterpolation {
         
     }
 
-    //Returns the point at time t
+    //Returns the point at angle t
     at(t: number) : Vector3 {
-        var theta = (t/this.F) * Math.PI * 2;
+        var theta = t;
         // Would still be three coordinate axes
         var position = new Vector3(this.A * Math.cos(theta), this.B * Math.sin(theta));
         position.applyMatrix4(this.transformMatrix);

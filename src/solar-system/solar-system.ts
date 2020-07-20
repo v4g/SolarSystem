@@ -27,10 +27,8 @@ export class SolarSystem {
     planets: Array<Planet>;
     orbits: Array<PlanetOrbit>;
     sun: Planet;
-    particleSystem: ParticleSystem;
     velocityArrows: Group;
     velocityGeometry: ArrowHelper;
-    gravity: GravityForce;
     light: PointLight;
     static readonly YEAR_IN_SECONDS = 3.154e7;
     static readonly SUNS_MASS = 1.989e30;
@@ -50,9 +48,6 @@ export class SolarSystem {
         this.group = new Group();
         this.planets = [];
         this.orbits = [];
-        this.particleSystem = new ParticleSystem();
-        this.gravity = new GravityForce();
-        this.particleSystem.addForce(this.gravity);
         this.velocityGeometry = new ArrowHelper(new Vector3(1, 0, 0), new Vector3(), SolarSystem.ARROW_SCALE, 0xff0000);
         this.velocityGeometry.scale.set(2, 1, 1);
         this.createPlanets(simParams);
@@ -72,13 +67,11 @@ export class SolarSystem {
         planet.mesh.userData.index = this.planets.length - 1;
         this.group.add(planet.mesh);
         planet.velocityMesh = new ArrowHelper(new Vector3(1, 0, 0), new Vector3(), SolarSystem.ARROW_SCALE, 0xff0000);
-        this.particleSystem.addParticle(planet);
         planet.setPosition(params.position.x, params.position.y, params.position.z);
         planet.setVelocity(params.velocity.x, params.velocity.y, params.velocity.z);
     }
 
     removePlanet(i: number) {
-        this.particleSystem.removeParticle(i);
         this.group.remove(this.planets[i].mesh);
         this.planets[i].destroy();
         this.planets.splice(i,1);
@@ -92,10 +85,6 @@ export class SolarSystem {
         }, this);
     }
     update(time_step: number) {
-        const N_ITERATIONS = 100;
-        time_step = time_step/N_ITERATIONS;
-        for (let i = 0; i < N_ITERATIONS; i++)
-        this.particleSystem.updateRK4(time_step);
     }
 
     destroy() {
@@ -103,7 +92,6 @@ export class SolarSystem {
             p.destroy();
         });
         this.planets = [];
-        this.particleSystem.destroy();
 
     }
 
@@ -112,4 +100,15 @@ export class SolarSystem {
             p.velocityVisible(b);
         });
     }
+}
+
+export class OrbitSystem extends SolarSystem {
+    addOrbit(i:number, a: number, b: number, c: number, x: number, ) {
+
+    }
+
+    udpate() {
+
+    }
+
 }

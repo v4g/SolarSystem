@@ -49,17 +49,17 @@ describe("Typescript usage suite", () => {
   });
 
   it("Test Solar System", () => {
-    const solarSystem = new SolarSystem();
-    solarSystem.update(0.1);
-    solarSystem.particleSystem.print();
-    solarSystem.particleSystem.printDerivative();
-    solarSystem.update(0.1);
-    solarSystem.particleSystem.print();
-    solarSystem.particleSystem.printDerivative();
-    solarSystem.update(0.1);
-    solarSystem.particleSystem.print();
-    solarSystem.particleSystem.printDerivative();
-    equal(true, true);
+    // const solarSystem = new SolarSystem();
+    // solarSystem.update(0.1);
+    // solarSystem.particleSystem.print();
+    // solarSystem.particleSystem.printDerivative();
+    // solarSystem.update(0.1);
+    // solarSystem.particleSystem.print();
+    // solarSystem.particleSystem.printDerivative();
+    // solarSystem.update(0.1);
+    // solarSystem.particleSystem.print();
+    // solarSystem.particleSystem.printDerivative();
+    // equal(true, true);
   });
 
 //   let derivative = [
