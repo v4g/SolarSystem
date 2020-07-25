@@ -4,8 +4,11 @@
 
   body {
     overflow: hidden;
+    margin: 0;
   }
-
+  .label-collection {
+    overflow: hidden;
+  }
   .planet-label {
     position: absolute;
     z-index: 100;
@@ -15,59 +18,59 @@
   }
 
   .news-ticker {
-    width: 50em;
-    padding-left: 0.2em;
-    padding-right: 0.2em;
-    height: 5em;  
+    width: 50rem;
+    padding-left: 0.2rem;
+    padding-right: 0.2rem;
+    height: 5rem;  
   }
   .date-input {
-    width: 10em;
-    padding-left: 0.2em;
-    padding-right: 0.2em;
-    height: 1.5em;
+    width: 10rem;
+    padding-left: 0.2rem;
+    padding-right: 0.2rem;
+    height: 1.5rem;
   }
   .date-output {
-    width: 10em;
-    padding-left: 0.2em;
-    padding-right: 0.2em;
-    height: 1.5em;
+    width: 10rem;
+    padding-left: 0.2rem;
+    padding-right: 0.2rem;
+    height: 1.5rem;
   }
 
   .number-input {
-    width: 5em;
-    padding-left: 0.2em;
-    padding-right: 0.2em;
-    height: 1.5em;
+    width: 5rem;
+    padding-left: 0.2rem;
+    padding-right: 0.2rem;
+    height: 1.5rem;
   }
 
   .std-label {
     font-family: "Lucida Console", Courier, monospace;
     ;
-    flex-basis: 10em;
-    padding: 0.5em;
+    flex-basis: 10rem;
+    padding: 0.5rem;
     font-size: small;
   }
 
   button {
-    min-width: 10em;
+    min-width: 10rem;
     border-radius: 5px;
     background-color: cadetblue;
     font-family: "Lucida Console", Courier, monospace;
-    margin: 0.3em;
+    margin: 0.3rem;
   }
 
   .flex-row {
     display: flex;
     flex-direction: row;
-    padding: 0.1em;
-    padding-left: 1em;
-    padding-right: 1em;
+    padding: 0.1rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
 
   .flex-col {
     display: flex;
     flex-direction: column;
-    padding: 0.1em;
+    padding: 0.1rem;
     justify-content: space-evenly;
   }
 
@@ -76,8 +79,9 @@
     background-color: tomato;
     color: white;
     border: 2px solid black;
-    padding: 1em;
+    padding: 1rem;
     position: absolute;
-    top: 1em;
+    top: 1rem;
     opacity: 0.6;
+    /* display: none; */
   }

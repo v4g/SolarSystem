@@ -1,5 +1,5 @@
 import { Boilerplate } from "../boilerplate/boilerplate";
-import { Vector3, Plane, Camera, Texture, TextureLoader, RepeatWrapping, CubeTextureLoader, MeshBasicMaterial, Mesh, BoxGeometry, BackSide, WebGLCapabilities, LinearFilter, NearestFilter, Vector4, FontLoader, MeshStandardMaterial, Matrix4, AudioListener, Audio, AudioLoader } from "three";
+import { Vector3, Plane, Camera, Texture, TextureLoader, RepeatWrapping, CubeTextureLoader, MeshBasicMaterial, Mesh, BoxGeometry, BackSide, WebGLCapabilities, LinearFilter, NearestFilter, Vector4, FontLoader, MeshStandardMaterial, Matrix4, AudioListener, Audio, AudioLoader, Vector2 } from "three";
 import { SolarSystem, SolarSystemParams } from "./solar-system";
 import { PlanetParams } from "./planet"; import { GravityForce } from "../particle-system/particle-system";
 import { TrackballControls } from "three/examples/jsm/controls/TrackballControls";
@@ -7,6 +7,7 @@ import { OrbitTrail, OrbitTrailManager } from "./orbit-trail";
 import { Events, EventUpdater } from "./events";
 import { OrbitManager, IntegratedOrbitManager, EllipticalOrbitManager } from "./integrated-orbit-manager";
 import { PlanetOrbit, OrbitalParameters } from "./planet-orbit";
+import { threadId } from "worker_threads";
 const NewsAPI = require('newsapi');
 const newsapi = new NewsAPI('cc5028bc85904e9c9faa0e8eccb15045');
 
@@ -36,7 +37,7 @@ export class SolarSystemStarter extends Boilerplate {
     targetDateHTML: HTMLInputElement;
     currentDateHTML: HTMLInputElement;
     newsTickerHTML: HTMLInputElement;
-    
+
     units: ScaledUnits;
     controls: TrackballControls;
     background: Texture;
@@ -48,6 +49,7 @@ export class SolarSystemStarter extends Boilerplate {
     labelsHTML: HTMLElement[];
     speedVarier: SimSpeedVarier;
     events: EventUpdater;
+    labelWidth = new Vector2();
     // Post creation hook 
     postInitHook() {
         // this.renderer.domElement.addEventListener('mousedown', this.onMouseDown.bind(this), false);
@@ -112,7 +114,8 @@ export class SolarSystemStarter extends Boilerplate {
         this.setViewMode();
         this.events = new EventUpdater();
         // this.pause();
-        this.music();
+        // this.music();
+        this.controls.target = this.solarSystem.planets[0].getPosition();
     }
 
     music() {
@@ -125,7 +128,7 @@ export class SolarSystemStarter extends Boilerplate {
 
         // load a sound and set it as the Audio object's buffer
         var audioLoader = new AudioLoader();
-        audioLoader.load('res/music.ogg', function (buffer:any) {
+        audioLoader.load('res/music.ogg', function (buffer: any) {
             this.sound.setBuffer(buffer);
             this.sound.setLoop(true);
             this.sound.setVolume(0.1);
@@ -143,6 +146,7 @@ export class SolarSystemStarter extends Boilerplate {
 
     updateNews(d: Date) {
         this.newsTickerHTML.textContent = this.events.update(d);
+        // console.log(this.solarSystem.planets[0].getPosition());
     }
     setViewMode() {
         document.getElementById("menu1").style.display = "none";
@@ -284,8 +288,8 @@ export class SolarSystemStarter extends Boilerplate {
         let viewport = new Vector4();
         this.renderer.getViewport(viewport);
         return {
-            x: (pos.x + 1) * viewport.z / 2 + viewport.x,
-            y: (- pos.y + 1) * viewport.w / 2 + viewport.y
+            x: ((pos.x + 1) * viewport.z / 2 + viewport.x),
+            y: ((- pos.y + 1) * viewport.w / 2 + viewport.y)
         };
 
     }
@@ -293,21 +297,33 @@ export class SolarSystemStarter extends Boilerplate {
         if (this.labelsHTML) {
             this.labelsHTML.forEach((l, i) => {
                 let obj = this.toScreenXY(this.solarSystem.planets[i].getPosition());
+                if (obj.y > (window.innerHeight - 3 * l.offsetHeight) || obj.x > (window.innerWidth - 3 * l.offsetWidth)) {
+                    if (l.offsetWidth > 0 ) this.labelWidth.x = l.offsetWidth;
+                    if (l.offsetWidth > 0 ) this.labelWidth.y = l.offsetHeight;
+                    l.style.display = "none";
+                } else if (l.style.display == "none" && (obj.y < window.innerHeight - (4 * this.labelWidth.y) && obj.x < window.innerWidth - (4 * this.labelWidth.x) )) {
+                    l.style.display = "block";
+                }
                 l.style.top = obj.y + "px";
                 l.style.left = obj.x + "px";
+
             });
         }
     }
     createLabels() {
         this.labelsHTML = [];
+        const outerDiv = document.createElement("div");
+        outerDiv.className = "label-collection";
+        outerDiv.style.height = window.innerHeight + "px";
         this.solarSystem.planets.forEach((p, i) => {
             const ele = document.createElement("div");
             ele.id = "planet-label" + i;
             ele.className = "planet-label";
             ele.textContent = p.name;
-            document.body.appendChild(ele);
+            outerDiv.appendChild(ele);
             this.labelsHTML.push(ele);
         }, this);
+        document.body.appendChild(outerDiv);
     }
 
     calculatePresentDate(): number {

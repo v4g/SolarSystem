@@ -14,24 +14,35 @@ export class Boilerplate {
     pointSelected !: Object3D | null;
     interpolation: Interpolation;
     t: number;
+    aspectRatio: number;
     constructor() {
 
         var container = document.createElement('div');
         this.raycaster = new Raycaster();
         document.body.appendChild(container);
-
+        // var canvas = document.createElement('canvas');
+        // canvas.width = 200;
+        // canvas.height = 200;
+        // console.log(canvas);
+        // container.appendChild(canvas);
         this.renderer = new WebGLRenderer();
-        this.renderer.setPixelRatio(window.devicePixelRatio);
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        // this.renderer.setPixelRatio(window.devicePixelRatio);
+        // this.renderer.setSize(window.innerWidth/window.devicePixelRatio, window.innerHeight/window.devicePixelRatio);
+        // var width = Math.min(window.innerWidth, window.screen.availWidth);
+        // var height = Math.min(window.innerHeight, window.screen.availHeight);
+        var width = window.outerWidth;
+        var height = window.outerHeight;
+        this.renderer.setSize(width, height);
         container.appendChild(this.renderer.domElement);
-
+        console.log(window.devicePixelRatio);
+        this.aspectRatio = window.innerWidth / window.innerHeight;
         this.camera = new PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 20000);
         this.camera.position.set(0, 0, 200);
         this.camera.lookAt(0, 0, 0);
-
+        setTimeout(this.onWindowResize.bind(this), 3000);
         this.scene = new Scene();
         this.scene.background = new Color('#000000');
-        
+        console.log(window.innerWidth, window.innerHeight);
         window.addEventListener('resize', this.onWindowResize.bind(this), false);
 
         this.postInitHook();
@@ -43,17 +54,25 @@ export class Boilerplate {
     }
 
     onWindowResize() {
-
-        this.camera.aspect = window.innerWidth / window.innerHeight;
+        // var width = Math.min(window.innerWidth, window.screen.availWidth);
+        // var height = Math.min(window.innerHeight, window.screen.availHeight);
+        var width = window.innerWidth;
+        var height = window.innerHeight;
+        console.log("Resize was called", width, height);
+        this.camera.aspect = width /height;
         this.camera.updateProjectionMatrix();
-
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.aspectRatio = width / height;
+        document.body.style.maxWidth = width+"px";
+        document.body.style.maxHeight = height+"px";
+        
+        this.renderer.setSize(width, height);
 
     }
 
     //
 
     animate() {
+        // this.onWindowResize();
         this.animateHook();
         requestAnimationFrame(this.animate.bind(this));
         this.render();
