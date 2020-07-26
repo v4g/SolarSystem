@@ -126,7 +126,7 @@ export class SolarSystemStarter extends Boilerplate {
         this.setViewMode();
         this.events = new EventUpdater();
         // this.pause();
-        // this.music();
+        this.music();
         this.controls.target = this.solarSystem.planets[0].getPosition();
     }
 
@@ -143,7 +143,7 @@ export class SolarSystemStarter extends Boilerplate {
         audioLoader.load('res/music.ogg', function (buffer: any) {
             this.sound.setBuffer(buffer);
             this.sound.setLoop(true);
-            this.sound.setVolume(0.1);
+            this.sound.setVolume(1);
             this.sound.play();
         }.bind(this));
     }
