@@ -28,6 +28,8 @@ Add elliptical orbits even if the planets dont follow them
 Year selection
 X    Add the ability to select a date to go to from the current date
 X        Would need to be able to say what date it is from the position of the earths orbit 
+Button to switch from simulation to elliptical
+Launch random asteroids
     Add a news ticker that displays some news events from the year that the planet is in
 Update the name to reflect the new name even if the simulation is reset and the planet is clicked in GUI
 What happens if a bunch of planets start at the same point and some sort of

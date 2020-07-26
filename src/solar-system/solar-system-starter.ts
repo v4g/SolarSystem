@@ -1,7 +1,7 @@
 import { Boilerplate } from "../boilerplate/boilerplate";
 import { Vector3, Plane, Camera, Texture, TextureLoader, RepeatWrapping, CubeTextureLoader, MeshBasicMaterial, Mesh, BoxGeometry, BackSide, WebGLCapabilities, LinearFilter, NearestFilter, Vector4, FontLoader, MeshStandardMaterial, Matrix4, AudioListener, Audio, AudioLoader, Vector2 } from "three";
 import { SolarSystem, SolarSystemParams } from "./solar-system";
-import { PlanetParams } from "./planet"; import { GravityForce } from "../particle-system/particle-system";
+import { PlanetParams, Planet } from "./planet"; import { GravityForce } from "../particle-system/particle-system";
 import { TrackballControls } from "three/examples/jsm/controls/TrackballControls";
 import { OrbitTrail, OrbitTrailManager } from "./orbit-trail";
 import { Events, EventUpdater } from "./events";
@@ -22,12 +22,15 @@ export class SolarSystemStarter extends Boilerplate {
     pauseSimulation: boolean;
     mousemoveListener: any;
     startParams: SolarSystemParams;
+    ellipticalOrbitManager: EllipticalOrbitManager
+    integratedOrbitManager: IntegratedOrbitManager;
 
     velocityVisible: boolean;
     trailVisible: boolean;
     simulationSpeed: number;
     musicPlay: boolean;
     sound: Audio;
+    simMode: boolean;
 
     gConstant: HTMLInputElement
     pauseSimButton: HTMLInputElement;
@@ -37,6 +40,8 @@ export class SolarSystemStarter extends Boilerplate {
     targetDateHTML: HTMLInputElement;
     currentDateHTML: HTMLInputElement;
     newsTickerHTML: HTMLInputElement;
+    simButtonHTML: HTMLInputElement;
+    launchCometHTML: HTMLInputElement;
 
     units: ScaledUnits;
     controls: TrackballControls;
@@ -57,11 +62,12 @@ export class SolarSystemStarter extends Boilerplate {
         this.mousemoveListener = this.mouseDragPoint.bind(this);
         this.t = 0;
         this.elapsedCycles = 0;
-        this.simulationSpeed = 0.01;
+        this.simulationSpeed = 0.001;
         this.cyclesInOneYear = 31.54;
         this.pauseSimButton = document.getElementById("pause-sim") as HTMLInputElement;
         this.pauseSimButton.addEventListener("click", this.pauseResume.bind(this));
         this.dateAtStart = new Date(2020, 6, 7).getTime();
+        this.simMode = false;
 
         document.getElementById("reset-sim").addEventListener("click", this.simulate.bind(this));
         document.getElementById("add-planet").addEventListener("click", this.addNewPlanet.bind(this));
@@ -70,7 +76,7 @@ export class SolarSystemStarter extends Boilerplate {
         document.getElementById("planet-list").addEventListener("change", this.selectPlanet.bind(this));
         document.getElementById("goto-date").addEventListener("click", this.gotoDate.bind(this));
         document.getElementById("toggle-music").addEventListener("click", this.toggleMusic.bind(this));
-
+        
         this.simSpeedHTML = document.getElementById("sim-speed") as HTMLInputElement;
         this.targetDateHTML = document.getElementById("target-date") as HTMLInputElement;
         this.currentDateHTML = document.getElementById("current-date") as HTMLInputElement;
@@ -78,12 +84,16 @@ export class SolarSystemStarter extends Boilerplate {
         this.checkbox = document.getElementById("velocity-visible") as HTMLInputElement;
         this.trailCheckbox = document.getElementById("trail-visible") as HTMLInputElement;
         this.newsTickerHTML = document.getElementById("news-ticker") as HTMLInputElement;
+        this.simButtonHTML = document.getElementById("sim-mode") as HTMLInputElement;
+        this.launchCometHTML = document.getElementById("launch-comet") as HTMLInputElement;
 
         this.simSpeedHTML.addEventListener("change", this.updateSimSpeed.bind(this));
         this.simSpeedHTML.valueAsNumber = this.simulationSpeed;
         this.gConstant.addEventListener("change", this.updateGConstant.bind(this));
         this.checkbox.addEventListener("change", this.setVelocityVisibility.bind(this));
         this.trailCheckbox.addEventListener("change", this.setTrailVisibility.bind(this));
+        this.simButtonHTML.addEventListener("click", this.toggleSimMode.bind(this));
+        this.launchCometHTML.addEventListener("click", this.launchComet.bind(this));
 
         this.inputView = this.getInputView();
 
@@ -95,9 +105,11 @@ export class SolarSystemStarter extends Boilerplate {
         this.startParams = this.params.clone();
         this.solarSystem = new SolarSystem(this.params);
         this.setPlanetOrbits();
-        this.orbitManager = new IntegratedOrbitManager(this.gravity);
-        this.orbitManager = new EllipticalOrbitManager();
-        this.orbitManager.setSolarSystem(this.solarSystem);
+        this.integratedOrbitManager = new IntegratedOrbitManager(this.gravity);
+        this.ellipticalOrbitManager = new EllipticalOrbitManager();
+        this.orbitManager = this.ellipticalOrbitManager;
+        this.integratedOrbitManager.setSolarSystem(this.solarSystem);
+        this.ellipticalOrbitManager.setSolarSystem(this.solarSystem);
         this.updateGConstant();
         this.scene.add(this.solarSystem.group);
 
@@ -141,6 +153,30 @@ export class SolarSystemStarter extends Boilerplate {
             this.sound.pause();
         } else {
             this.sound.play();
+        }
+    }
+
+    toggleSimMode() {
+        if (this.simMode) {
+            this.simMode = false;
+            this.simButtonHTML.textContent = "Orbit Mode";
+            this.launchCometHTML.disabled = true;
+            this.simulate();
+        } else {
+            this.simMode = true;
+            this.simButtonHTML.textContent = "Simulation Mode";
+            this.launchCometHTML.disabled = false;
+            this.simulate();
+        }
+    }
+
+    launchComet() {
+        if (this.simMode) {
+            const pos = this.solarSystem.planets[7].getPosition().applyAxisAngle(new Vector3(0, 0, 1), Math.random() * Math.PI);
+            const vel = pos.clone().normalize().applyAxisAngle(new Vector3(0, 0, 1), Math.PI / 9 + Math.random() * Math.PI / 9).multiplyScalar(-1);
+            const param = new PlanetParams("Comet", pos, vel, '0xff0000', this.units.getScaledMass(SolarSystem.MOONS_MASS), 0.5);
+            const comet = this.solarSystem.addPlanet(param);
+            this.orbitManager.addPlanet(comet);
         }
     }
 
@@ -190,19 +226,21 @@ export class SolarSystemStarter extends Boilerplate {
         const planets = this.solarSystem.planets;
         const orbits = new Array<PlanetOrbit>();
         const orbitParams = [];
-        orbitParams.push(new OrbitalParameters(0.2056, 57.91e9, 87.968 * 3600 * 24, 1.850)); // Mercury
+        orbitParams.push(new OrbitalParameters(0.2056, 57.91e9, 87.968 * 3600 * 24, 1.850, 45)); // Mercury
         orbitParams.push(new OrbitalParameters(0.0067, 108.21e9, 224.695 * 3600 * 24, 3.39)); // Venus
         orbitParams.push(new OrbitalParameters(0.01672, 149.60e9, 365.242 * 3600 * 24, 0)); // Earth
-        orbitParams.push(new OrbitalParameters(0.0935, 227.92e9, 686.973 * 3600 * 24, 1.850)); // Mars
+        orbitParams.push(new OrbitalParameters(0.0935, 227.92e9, 686.973 * 3600 * 24, 1.850, 45)); // Mars
         orbitParams.push(new OrbitalParameters(0.0489, 778.57e9, 4332.589 * 3600 * 24, 1.304)); // Jupiter
-        orbitParams.push(new OrbitalParameters(0.0565, 1433.53e9, 10746.94 * 3600 * 24, 2.485)); // Saturn
-        orbitParams.push(new OrbitalParameters(0.0457, 2872.46e9, 30588.740 * 3600 * 24, 0.772)); // Uranus
+        orbitParams.push(new OrbitalParameters(0.0565, 1433.53e9, 10746.94 * 3600 * 24, 2.485, 45)); // Saturn
+        orbitParams.push(new OrbitalParameters(0.0457, 2872.46e9, 30588.740 * 3600 * 24, 0.772, 90)); // Uranus
         orbitParams.push(new OrbitalParameters(0.0113, 4495.06e9, 59799.9 * 3600 * 24, 1.769)); // Neptune
+        // orbitParams.push(new OrbitalParameters(0.2488, 5906.38e9, 90560 * 3600 * 24, -17.16, 45)); // Pluto
 
         orbitParams.forEach((p, i) => {
             p.convert(this.units);
-            orbits.push(new PlanetOrbit(sun, planets[i + 1], p.semiMajorAxis, p.semiMinorAxis, p.period, p.x, p.y, p.z));
+            orbits.push(new PlanetOrbit(p.focus, planets[i + 1], p.semiMajorAxis, p.semiMinorAxis, p.period, p.x, p.y, p.z));
             planets[i + 1].setOrbit(orbits[i]);
+            this.scene.add(orbits[i].getCurve());
         });
     }
     defaultSimParams(): SolarSystemParams {
@@ -225,6 +263,8 @@ export class SolarSystemStarter extends Boilerplate {
             -4.147403865575232E+03, 5.118871847171336E+03, 7.279300901810748E+01, '#5e84b5', 86.813e24, 0.6)); //mars
         values.push(new Array<any>('Neptune', 4.392215141217960E+12, -8.654609667080582E+11, -8.341322119960582E+10,
             1.027226060586543E+03, 5.371496217312306E+03, -1.347116154450971E+02, '#9cb7db', 102.413e24, 0.6)); //mars
+        // values.push(new Array<any>('Pluto', 2.024845322005403E+12, -4.67724453930847E+12, -8.510007415275407E+10,
+        // 5.139960569970635E+03, 1.005455099131228E+03, -1.606943799584174E+03, '#9cb7db', 0.01303e24, 0.6)); //mars
         // DEC 4 1991
         // values.push(new Array<any>('Mercury', 3.215586514076374E+10, 3.502320983159295E+10, -1.002055050515439E+08,
         //     3.366903971984620E+04, 2.452271301668723E+04, -1.084683781571878E+03, '#fcd703', 3.302e23, 0.3)); //mars
@@ -298,10 +338,10 @@ export class SolarSystemStarter extends Boilerplate {
             this.labelsHTML.forEach((l, i) => {
                 let obj = this.toScreenXY(this.solarSystem.planets[i].getPosition());
                 if (obj.y > (window.innerHeight - 3 * l.offsetHeight) || obj.x > (window.innerWidth - 3 * l.offsetWidth)) {
-                    if (l.offsetWidth > 0 ) this.labelWidth.x = l.offsetWidth;
-                    if (l.offsetWidth > 0 ) this.labelWidth.y = l.offsetHeight;
+                    if (l.offsetWidth > 0) this.labelWidth.x = l.offsetWidth;
+                    if (l.offsetWidth > 0) this.labelWidth.y = l.offsetHeight;
                     l.style.display = "none";
-                } else if (l.style.display == "none" && (obj.y < window.innerHeight - (4 * this.labelWidth.y) && obj.x < window.innerWidth - (4 * this.labelWidth.x) )) {
+                } else if (l.style.display == "none" && (obj.y < window.innerHeight - (4 * this.labelWidth.y) && obj.x < window.innerWidth - (4 * this.labelWidth.x))) {
                     l.style.display = "block";
                 }
                 l.style.top = obj.y + "px";
@@ -385,12 +425,17 @@ export class SolarSystemStarter extends Boilerplate {
         }
         this.selectPlanet();
         this.solarSystem = new SolarSystem(this.startParams);
+        this.setPlanetOrbits();
         this.elapsedCycles = 0;
         this.params = this.startParams.clone();
         this.solarSystem.velocitiesVisible(this.velocityVisible);
         this.buildPlanetOptions();
         this.calculateScaledG();
-        this.orbitManager = new IntegratedOrbitManager(this.gravity);
+        if (this.simMode)
+            this.orbitManager = new IntegratedOrbitManager(this.gravity);
+        else {
+            this.orbitManager = new EllipticalOrbitManager();
+        }
         this.orbitManager.setSolarSystem(this.solarSystem);
 
         this.updateGConstant();

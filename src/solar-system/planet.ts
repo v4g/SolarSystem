@@ -1,4 +1,4 @@
-import { SphereBufferGeometry, MeshBasicMaterial, Mesh, Vector3, ArrowHelper, Material, TextGeometry, PointLight, Scene, MeshStandardMaterial, Color } from "three";
+import { SphereBufferGeometry, MeshBasicMaterial, Mesh, Vector3, ArrowHelper, Material, TextGeometry, PointLight, Scene, MeshStandardMaterial, Color, Matrix4 } from "three";
 import { IParticle, ParticleDerivative, Particle } from "../particle-system/particle-system";
 import { ScaledUnits } from "./solar-system-starter";
 import { PointSet } from "../boilerplate/point-set";
@@ -99,7 +99,7 @@ export class Planet implements IParticle {
 
     private updateArrowDirection() {
         if (this._velocityMesh) {
-            this._velocityMesh.setDirection(this.getVelocity().normalize());
+            this._velocityMesh.setDirection(this.getVelocity().normalize().multiplyScalar(-1));
             this._velocityMesh.scale.setY(this.getVelocity().length());
         }
     }
@@ -129,6 +129,8 @@ export class Planet implements IParticle {
     setOrbit(orbit: PlanetOrbit) {
         this.orbit = orbit;
         const pos = this.getPosition().sub(orbit.sun);
+        const inv = orbit.orbit.transformMatrix;
+        pos.applyMatrix4(inv);
         this.orbit.theta = Math.atan2(pos.y, pos.x);
     }
 

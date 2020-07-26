@@ -20,16 +20,8 @@ export class Boilerplate {
         var container = document.createElement('div');
         this.raycaster = new Raycaster();
         document.body.appendChild(container);
-        // var canvas = document.createElement('canvas');
-        // canvas.width = 200;
-        // canvas.height = 200;
-        // console.log(canvas);
-        // container.appendChild(canvas);
         this.renderer = new WebGLRenderer();
         // this.renderer.setPixelRatio(window.devicePixelRatio);
-        // this.renderer.setSize(window.innerWidth/window.devicePixelRatio, window.innerHeight/window.devicePixelRatio);
-        // var width = Math.min(window.innerWidth, window.screen.availWidth);
-        // var height = Math.min(window.innerHeight, window.screen.availHeight);
         var width = window.outerWidth;
         var height = window.outerHeight;
         this.renderer.setSize(width, height);
@@ -54,8 +46,6 @@ export class Boilerplate {
     }
 
     onWindowResize() {
-        // var width = Math.min(window.innerWidth, window.screen.availWidth);
-        // var height = Math.min(window.innerHeight, window.screen.availHeight);
         var width = window.innerWidth;
         var height = window.innerHeight;
         console.log("Resize was called", width, height);

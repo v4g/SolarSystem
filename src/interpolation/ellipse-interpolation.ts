@@ -1,4 +1,4 @@
-import { Matrix4, Vector3 } from "three";
+import { Matrix4, Vector3, EllipseCurve, BufferGeometry, LineBasicMaterial, Line, Mesh } from "three";
 
 export class EllipseInterpolation {
     
@@ -7,9 +7,11 @@ export class EllipseInterpolation {
     // c - center of the ellipse
     // x,y,z - the basis vectors for the frame of the ellipse
     transformMatrix = new Matrix4();
+    transformMatrixInv = new Matrix4();
     A : number;
     B : number;
     F : number;
+    ellipse : Line;
     constructor(A: number, B: number, F: number, C?:Vector3, x?:Vector3, y?:Vector3, z?:Vector3 ) {
         this.A = A;
         this.B = B;
@@ -19,9 +21,11 @@ export class EllipseInterpolation {
             this.transformMatrix.transpose();
         }
         if (C){
+            C.applyMatrix4(this.transformMatrixInv.getInverse(this.transformMatrix));
             this.transformMatrix.setPosition(C);
         }
-        
+        this.transformMatrixInv.getInverse(this.transformMatrix);
+        this.show();
     }
 
     //Returns the point at angle t
@@ -29,9 +33,33 @@ export class EllipseInterpolation {
         var theta = t;
         // Would still be three coordinate axes
         var position = new Vector3(this.A * Math.cos(theta), this.B * Math.sin(theta));
-        position.applyMatrix4(this.transformMatrix);
+        position.applyMatrix4(this.transformMatrixInv);
         return position; 
 
     }
+    show() {
+        var curve = new EllipseCurve(
+            0, 0,            // ax, aY
+            this.A, this.B,           // xRadius, yRadius
+            0, 2 * Math.PI,  // aStartAngle, aEndAngle
+            false,            // aClockwise
+            0                 // aRotation
+        );
+
+        var points = curve.getPoints(50);
+        var points3 = new Array<Vector3>();
+        points.forEach(p => {
+            var p3 = new Vector3(p.x, p.y, 0);
+            points3.push(p3.applyMatrix4(this.transformMatrixInv));
+        })
+        var geometry = new BufferGeometry().setFromPoints(points3);
+
+        var material = new LineBasicMaterial({ color: 0x5d7c85 });
+
+        // Create the final object to add to the scene
+        this.ellipse = new Line(geometry, material);
+        // this.ellipse.applyMatrix4(this.transformMatrix);
+    }
+
 
 };

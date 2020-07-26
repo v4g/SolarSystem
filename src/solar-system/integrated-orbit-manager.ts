@@ -12,7 +12,6 @@ export interface OrbitManager {
 export class IntegratedOrbitManager implements OrbitManager {
     particleSystem: ParticleSystem;
     gravity: GravityForce;
-    
     constructor(gravity = new GravityForce()) {
         this.particleSystem = new ParticleSystem();
         this.gravity = gravity;

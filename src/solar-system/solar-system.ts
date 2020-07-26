@@ -61,7 +61,7 @@ export class SolarSystem {
         return params;
     }
 
-    addPlanet(params: PlanetParams) {
+    addPlanet(params: PlanetParams): Planet {
         const planet = new Planet(params.name, params.radius, params.color, params.mass)
         this.planets.push(planet);
         planet.mesh.userData.index = this.planets.length - 1;
@@ -69,6 +69,8 @@ export class SolarSystem {
         planet.velocityMesh = new ArrowHelper(new Vector3(1, 0, 0), new Vector3(), SolarSystem.ARROW_SCALE, 0xff0000);
         planet.setPosition(params.position.x, params.position.y, params.position.z);
         planet.setVelocity(params.velocity.x, params.velocity.y, params.velocity.z);
+        // planet.velocityVisible(false);
+        return planet;
     }
 
     removePlanet(i: number) {
