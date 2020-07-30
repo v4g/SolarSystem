@@ -2,9 +2,12 @@ const path = require('path');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+
 module.exports = {
   entry: './src/index.ts',
-  devtool: 'inline-source-map',
+  // devtool: 'inline-source-map',
   plugins: [
     new CleanWebpackPlugin(),
     new CopyWebpackPlugin({
@@ -37,6 +40,7 @@ module.exports = {
   },
   optimization: {
     moduleIds: 'hashed',
+    minimize: true,
     runtimeChunk: 'single',
     splitChunks: {
       cacheGroups: {
@@ -47,5 +51,9 @@ module.exports = {
         },
       },
     },
+    minimizer: [new TerserPlugin({
+      // include: /\.js/,
+    })],
   },
+
 };

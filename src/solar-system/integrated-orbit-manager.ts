@@ -8,6 +8,7 @@ export interface OrbitManager {
     removePlanet(i: number): any;
     addPlanet(planet: IParticle): any;
     setSolarSystem(system: SolarSystem): any;
+    setTo(time: number): any;
 }
 export class IntegratedOrbitManager implements OrbitManager {
     particleSystem: ParticleSystem;
@@ -16,6 +17,8 @@ export class IntegratedOrbitManager implements OrbitManager {
         this.particleSystem = new ParticleSystem();
         this.gravity = gravity;
         this.particleSystem.addForce(this.gravity);        
+    }
+    setTo(time: number) {
     }
 
     update(time_step: number): any {
@@ -43,12 +46,15 @@ export class IntegratedOrbitManager implements OrbitManager {
     }
 }
 
-export class EllipticalOrbitManager {
+export class EllipticalOrbitManager implements OrbitManager {
     orbits: PlanetOrbit[];
     totalTime: number;
     constructor() {
         this.orbits = [];
         this.totalTime = 0;
+    }
+    setTo(time: number) {
+        this.totalTime = time;
     }
     update(time_step: number) {
         this.totalTime += time_step;

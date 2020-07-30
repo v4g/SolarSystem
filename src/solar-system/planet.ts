@@ -1,7 +1,6 @@
 import { SphereBufferGeometry, MeshBasicMaterial, Mesh, Vector3, ArrowHelper, Material, TextGeometry, PointLight, Scene, MeshStandardMaterial, Color, Matrix4 } from "three";
 import { IParticle, ParticleDerivative, Particle } from "../particle-system/particle-system";
 import { ScaledUnits } from "./solar-system-starter";
-import { PointSet } from "../boilerplate/point-set";
 import { PlanetOrbit } from "./planet-orbit";
 
 export class PlanetParams {

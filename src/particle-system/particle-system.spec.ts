@@ -1,7 +1,5 @@
 import { equal } from "assert";
-import { Particle, ParticleSystem, GravityForce, ParticleDerivative } from "./particle-system";
-import { SolarSystem } from "../solar-system/solar-system";
-import { EqualStencilFunc } from "three";
+import { Particle, ParticleSystem, GravityForce } from "./particle-system";
 
 describe("Typescript usage suite", () => {
 

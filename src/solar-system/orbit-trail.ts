@@ -1,5 +1,5 @@
-import { IParticle, Particle } from "../particle-system/particle-system";
-import { Vector3, BufferGeometry, LineBasicMaterial, Line, Mesh, ConeBufferGeometry, MeshBasicMaterial, Material, Quaternion, MeshStandardMaterial, Color, Scene } from "three";
+import { IParticle } from "../particle-system/particle-system";
+import { Vector3, BufferGeometry, Mesh, ConeBufferGeometry, Quaternion, MeshStandardMaterial, Color, Scene } from "three";
 
 /**
  * This class will hold the trail of an orbit
@@ -42,11 +42,11 @@ export class OrbitTrail {
         this.counter %= this.SIZE;
     }
     update(simSpeed: number) {
-        this.updateVelocityTrail(simSpeed);
+        this.updateVelocityTrail();
         // this.geometry.setFromPoints(this.trackedPoints);
     }
 
-    updateVelocityTrail(simSpeed:number) {
+    updateVelocityTrail() {
         const TRAIL_C = 10 ;
         const TRAIL_LENGTH = this.particle.getVelocity().length() * TRAIL_C;
         const newPos = this.particle.getPosition().sub(this.particle.getVelocity().multiplyScalar(TRAIL_C/2));

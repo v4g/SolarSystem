@@ -1,4 +1,4 @@
-import { WebGLRenderer, Scene, PerspectiveCamera, Raycaster, Color, Vector3, Plane, Object3D } from "three";
+import { WebGLRenderer, Scene, PerspectiveCamera, Raycaster, Color, Object3D } from "three";
 import { PointSet } from "./point-set";
 import { Interpolation } from "../interpolation/interpolation";
 
@@ -31,7 +31,7 @@ export class Boilerplate {
         this.camera = new PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 20000);
         this.camera.position.set(0, 0, 200);
         this.camera.lookAt(0, 0, 0);
-        setTimeout(this.onWindowResize.bind(this), 3000);
+        // setTimeout(this.onWindowResize.bind(this), 3000);
         this.scene = new Scene();
         this.scene.background = new Color('#000000');
         console.log(window.innerWidth, window.innerHeight);

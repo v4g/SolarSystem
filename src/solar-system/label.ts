@@ -1,4 +1,4 @@
-import { FontLoader, TextGeometry, Mesh, MeshStandardMaterial, Scene, Group } from "three";
+import { FontLoader, TextGeometry, Mesh, MeshStandardMaterial } from "three";
 
 export class Label {
     loader: FontLoader;

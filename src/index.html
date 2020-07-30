@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html>
 
+
 <head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta charset="utf-8">
 	<title>Gravity Simulation</title>
 	<link rel="stylesheet" type="text/css" href="css/stylesheet.css">
@@ -79,21 +81,22 @@
 		<div class="container">
 			<div class="flex-col">
 				<div class="flex-row">
-					<label for="current-date" class="std-label">Present Date</label>
+					<!-- <label for="current-date" class="std-label">Present Date</label> -->
 					<input type="text" class="date-output" id="current-date" disabled="true">
-				</div>
-				<div class="flex-row">
-					<label for="target-date" class="std-label">Select the Date to go to</label>
 					<input type="date" class="date-input" id="target-date">
 				</div>
-				<div class="flex-row">
+				<!-- <div class="flex-row">
+					<label for="target-date" class="std-label">Select the Date to go to</label>
+				</div> -->
+				<!-- <div class="flex-row">
 					<span></span>
-					<button id="goto-date">Time Travel!</button>
-					<button id="toggle-music">Toggle Music</button>
-				</div>
+					<button class="action-button" id="goto-date">Time Travel!</button>
+					<button class="action-button" id="toggle-music">Toggle Music</button>
+				</div> -->
 				<div class="flex-row">
-					<button id="sim-mode">Orbit Mode</button>
-					<button id="launch-comet" disabled="true">Launch Comet</button>
+					<!-- <button class="action-button" id="sim-mode">Orbit Mode</button> -->
+					<button class="action-button" id="fast-travel">Fast Travel</button>
+					<button class="action-button" id="launch-comet" disabled="false">Launch Comet</button>
 				</div>
 
 
@@ -114,10 +117,8 @@
 		</div>
 		<div id="menu5" class="flex-col">
 			<div class="flex-row">
-				<a href="https://github.com/v4g/SolarSystem">Github</a>
-			</div>
-			<div class="flex-row">
-				<a href="https://www.eso.org/public/usa/images/eso0932a/">Image ESO/S. Brunier </a>
+				<a href="https://github.com/v4g/SolarSystem">Github </a> 
+				<a href="https://www.eso.org/public/usa/images/eso0932a/"> Image ESO/S. Brunier </a>
 			</div>
 			<div class="news-ticker" id="news-ticker"> </div>
 		</div>
