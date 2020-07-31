@@ -22,8 +22,10 @@ export class Boilerplate {
         document.body.appendChild(container);
         this.renderer = new WebGLRenderer();
         // this.renderer.setPixelRatio(window.devicePixelRatio);
-        var width = window.outerWidth;
-        var height = window.outerHeight;
+        var width = window.innerWidth;
+        var height = window.innerHeight;
+        // var width = window.outerWidth;
+        // var height = window.outerHeight;
         this.renderer.setSize(width, height);
         container.appendChild(this.renderer.domElement);
         console.log(window.devicePixelRatio);

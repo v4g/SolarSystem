@@ -315,7 +315,7 @@ export class SolarSystemStarter extends Boilerplate {
             if (this.trailVisible == true) this.orbits.update(this.simulationSpeed);
             this.elapsedCycles += this.simulationSpeed;
             let currentTime = this.calculatePresentDate();
-            if (this.targetTime > 0) {
+            if (Math.abs(this.targetTime) > 0) {
                 this.simulationSpeed = this.speedVarier.calculateSpeed(this.targetTime, currentTime, this.simulationSpeed);
             }
 
@@ -341,13 +341,13 @@ export class SolarSystemStarter extends Boilerplate {
         if (this.labelsHTML) {
             this.labelsHTML.forEach((l, i) => {
                 let obj = this.toScreenXY(this.solarSystem.planets[i].getPosition());
-                // if (obj.y > (window.innerHeight - 3 * l.offsetHeight) || obj.x > (window.innerWidth - 3 * l.offsetWidth)) {
-                //     if (l.offsetWidth > 0) this.labelWidth.x = l.offsetWidth;
-                //     if (l.offsetWidth > 0) this.labelWidth.y = l.offsetHeight;
-                //     l.style.display = "none";
-                // } else if (l.style.display == "none" && (obj.y < window.innerHeight - (4 * this.labelWidth.y) && obj.x < window.innerWidth - (4 * this.labelWidth.x))) {
-                //     l.style.display = "block";
-                // }
+                if (obj.y > (window.innerHeight - l.offsetHeight) || obj.x > (window.innerWidth - l.offsetWidth)) {
+                    if (l.offsetWidth > 0) this.labelWidth.x = l.offsetWidth;
+                    if (l.offsetWidth > 0) this.labelWidth.y = l.offsetHeight;
+                    l.style.display = "none";
+                } else if (l.style.display == "none" && (obj.y < window.innerHeight - (2 * this.labelWidth.y) && obj.x < window.innerWidth - (2 * this.labelWidth.x))) {
+                    l.style.display = "block";
+                }
                 l.style.top = obj.y + "px";
                 l.style.left = obj.x + "px";
 
@@ -674,11 +674,11 @@ export class SolarSystemStarter extends Boilerplate {
     fastTravel() {
         this.gotoDate();
         this.setOrbitMode();
-        this.elapsedCycles = this.units.getScaledTime(this.targetTime - this.dateAtStart/1000);  
+        this.elapsedCycles = this.units.getScaledTime(this.targetTime - this.dateAtStart / 1000);
         this.orbitManager.setTo(this.elapsedCycles);
-        console.log(this.elapsedCycles);      
+        console.log(this.elapsedCycles);
     }
-    
+
 }
 
 /**
@@ -836,7 +836,7 @@ export class SimSpeedVarier {
      */
     calculateSpeed(to: number, current: number, speed: number): number {
         let direction = 0;
-        if (Math.abs(to-current) > 0)
+        if (Math.abs(to - current) > 0)
             direction = (to - current) / Math.abs(to - current);
         let accelerate = 1;
         if (Math.abs(to - current) < this.SLOW_DOWN_PERIOD) {
