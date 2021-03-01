@@ -14,7 +14,7 @@
   "dependencies": {
     "http-server": "^0.12.3",
     "newsapi": "^2.4.0",
-    "three": "^0.117.1"
+    "three": "^0.125.0"
   },
   "devDependencies": {
     "@types/mocha": "^7.0.2",
